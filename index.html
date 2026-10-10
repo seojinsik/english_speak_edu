@@ -43,6 +43,7 @@ header{position:sticky;top:0;z-index:40;background:rgba(255,255,255,.92);backdro
 .emoji{font-size:44px;line-height:1}
 .pr{color:var(--violet-d);font-family:Jua,system-ui,sans-serif;font-size:19px;margin-top:4px}
 .line .pr{font-size:15px;margin-top:2px}
+.prWrap{margin-top:6px}
 .opt{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;border-radius:18px;border:2px solid #e7e9f3;background:#fff;margin-bottom:10px;font-size:17px}
 .opt.right{border-color:#10b981;background:#ecfdf5}
 .opt.wrong{border-color:#fb923c;background:#fff7ed;animation:shake .35s}
@@ -179,7 +180,7 @@ label.muted{display:block;margin-top:12px}
 <div id="toast" class="hide"></div>
 
 <script src="content.js?v=6"></script>
-<script src="pron.js?v=1"></script>
+<script src="pron.js?v=2"></script>
 <script>
 const STICKERS=['🐶','🐱','🐰','🦊','🐼','🐨','🐯','🦁','🐸','🐵','🦄','🐙','🦋','🐞','🌸','🌈','🍓','🍩','🧁','🎀','👑','💎','🚀','🎈','🍭','🐳','🦕','🌻','🍀','🐧'];
 const AVATARS=['🦄','🐰','🐱','🐶','🦊','🐼','🐯','🌷','🌻','⭐','🙂','😎'];
@@ -233,7 +234,8 @@ const showPron=()=>!!LV().pron;
 function NAMES(){const e=state.nameEn.toLowerCase().split(/\s+/),k=state.name.split(/\s+/),m={};e.forEach((w,i)=>{m[w]=e.length===k.length?k[i]:(i?'':state.name)});return m}
 // 한글 발음 글자 (직접 적은 발음이 우선, 없으면 사전으로 만들고, 모르는 단어가 있으면 보여주지 않아요)
 function prText(en,pr){if(!showPron())return '';if(pr)return T(pr);const r=pronOf(en,NAMES());return r.miss.length?'':r.text}
-function prHtml(en,pr){const t=prText(en,pr);return t?`<div class="pr">${esc(t)}</div>`:''}
+// 발음은 처음엔 숨기고 🔤 버튼을 눌러야 보여요. 직접 적은 발음이 없고 사전으로 만든 건 '(대략)' 표시
+function prHtml(en,pr){const t=prText(en,pr);return t?`<div class="prWrap"><button class="btn btn-soft sm" data-pr>🔤 발음</button><div class="pr hide">${esc(t)}${pr?'':' <span class="muted">(대략)</span>'}</div></div>`:''}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
 function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function pick(a,i){return a[((i%a.length)+a.length)%a.length]}
@@ -268,6 +270,7 @@ function toggleSpeed(){const r=RATES[(rateIdx()+1)%RATES.length];state.rate=r.r;
 document.addEventListener('click',e=>{
  requestWake();
  const s=e.target.closest('[data-say]');if(s){playId++;speak(s.dataset.say)}
+ const pb=e.target.closest('[data-pr]');if(pb){const d=pb.nextElementSibling;d.classList.toggle('hide');pb.textContent=d.classList.contains('hide')?'🔤 발음':'🔤 숨기기'}
  const m=e.target.closest('[data-mic]');if(m)toggleMic(m);
  const p=e.target.closest('[data-play]');if(p)playMine(p.dataset.play);
  const r=e.target.closest('[data-reveal]');if(r)reveal(r);
@@ -468,7 +471,7 @@ const STAGE_VIEWS={
  speakall:t=>wrap(t,`이 월드의 문장 ${S.all.length}개를 모두 말해 봐요!`,S.all.map(phraseBox).join('')+nextBtn()),
  sub:t=>{const pt=S.pattern;return wrap(t,'문장 모양은 그대로! 단어만 바꿔봐요.',`<div class="box" style="background:#f5f3ff">
   <div class="en big-en">${esc(pt.en).replace('___','<span style="color:var(--violet)">___</span>')}</div>${prHtml(pt.en)}<div class="ko kr">${esc(pt.ko)}</div>
-  <div class="mt">${pt.slots.map((s,i)=>`<button class="chip" onclick="pickSlot(${i},this)">${s.e} <span class="en">${esc(s.en)}</span>${prText(s.en,s.pr)?` <span class="muted">(${esc(prText(s.en,s.pr))})</span>`:''}</button>`).join('')}</div>
+  <div class="mt">${pt.slots.map((s,i)=>`<button class="chip" onclick="pickSlot(${i},this)">${s.e} <span class="en">${esc(s.en)}</span></button>`).join('')}</div>
   <div id="swapCount" class="muted mt">단어 ${pt.slots.length}개를 모두 넣어 말해보자! (0/${pt.slots.length})</div>
   <div id="swapOut" class="mt"></div></div>${nextBtn()}`)},
  quiz:t=>{const q=S.quiz[S.qi];return wrap(t,`문제 ${S.qi+1}/${S.quiz.length} · 잘 듣고 알맞은 뜻을 골라요!`,`<div class="center"><button class="btn btn-main" style="font-size:20px;padding:16px 28px" data-say="${esc(q.t.en)}">🔊 다시 듣기</button></div>
@@ -574,7 +577,7 @@ function openListen(){LS.playing=false;lsSetWorld(cw<W().length&&unlocked(cw)?cw
 function lsSetWorld(i){playId++;LS.playing=false;if('speechSynthesis' in window)speechSynthesis.cancel();LS.wi=i;LS.items=lsItems(W()[i]);LS.i=0;renderListen()}
 function renderListen(){
  $('lsWorlds').innerHTML=W().map((w,i)=>unlocked(i)?`<button class="chip ${i===LS.wi?'active':''}" onclick="lsSetWorld(${i})">${w.icon} ${esc(w.name)}</button>`:'').join('');
- $('lsList').innerHTML=LS.items.map((it,k)=>`<button class="lsItem ${k===LS.i?'on':''}" data-ls="${k}"><span style="font-size:22px">${it.e}</span><span><span class="en">${esc(it.en)}</span><br><span class="muted">${prText(it.en,it.pr)?esc(prText(it.en,it.pr))+' · ':''}${esc(it.ko)}</span></span></button>`).join('');
+ $('lsList').innerHTML=LS.items.map((it,k)=>`<button class="lsItem ${k===LS.i?'on':''}" data-ls="${k}"><span style="font-size:22px">${it.e}</span><span><span class="en">${esc(it.en)}</span><br><span class="muted">${esc(it.ko)}</span></span></button>`).join('');
  $('lsRepeat').classList.toggle('on',state.listenRepeat);$('lsKo').classList.toggle('on',state.listenKo);
  renderLsNow();
 }
