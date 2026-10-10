@@ -1,7 +1,13 @@
 /* 영어 어드벤처 학습 내용
  * {EN} = 영어 이름, {KO} = 한글 이름. {KO야}·{KO이야}·{KO이에요}는 받침에 맞춰 바뀌어요. (예: 지수야 / 민준아)
+ *
+ * [문장 쓰는 법]  P("영어","한국어 뜻","이모지")
+ *   - 초급 모드에서는 영어 아래에 한글 발음이 자동으로 붙어요. (pron.js 의 단어 사전 사용)
+ *   - 발음을 직접 정하고 싶으면 네 번째에 적어요:  P("Let's go!","가자!","🚶","렛츠 고!")
+ *   - 대화 한 줄도 마찬가지:  ['me',"Okay!","좋아요!","오케이!"]
+ * [자주 쓰는 말을 쉽게 넣고 싶다면] 앱 ⚙️설정 → "✏️ 우리 아이 말"에서 폰으로 바로 추가할 수 있어요.
  */
-const P=(en,ko,e)=>({en,ko,e});
+const P=(en,ko,e,pr)=>({en,ko,e,pr});
 const WARMUP=[P("Hello!","안녕!","👋"),P("Thank you.","고마워요.","🙏")];
 const WARMUP_ADULT=[P("Nice to meet you.","만나서 반가워요.","🤝"),P("How's your day going?","오늘 하루 어때요?","☀️")];
 const W_BEGINNER=[
@@ -297,7 +303,7 @@ const W_MASTER=[
  missions:[`오늘 배운 관용구 하나를 실제 상황에 맞춰 혼잣말해 보기`,`관용구 하나를 아이에게 뜻과 함께 알려 주기`]}
 ];
 const LEVELS={
- beginner:{name:'초급',icon:'🌱',who:'아이 첫걸음',desc:'짧은 생활 표현을 듣고 따라 말해요.',adult:false,rate:.8,worlds:W_BEGINNER},
+ beginner:{name:'초급',icon:'🌱',who:'아이 첫걸음',desc:'짧은 생활 표현을 듣고 따라 말해요.',adult:false,pron:true,rate:.8,worlds:W_BEGINNER},
  intermediate:{name:'중급',icon:'🌿',who:'아이 다음 단계',desc:'조금 긴 문장으로 이유와 계획을 말해요.',adult:false,rate:.8,worlds:W_INTERMEDIATE},
  advanced:{name:'상급',icon:'🌳',who:'생활영어 가능한 성인',desc:'어른 생활 주제 · 한국어를 보고 영어로 먼저 말해요.',adult:true,rate:.95,worlds:W_ADVANCED},
  master:{name:'마스터',icon:'👑',who:'해외 생활 경험자',desc:'원어민 표현과 뉘앙스 · 원어민 속도 · 역할극 내 대사 숨김.',adult:true,rate:1.05,worlds:W_MASTER}

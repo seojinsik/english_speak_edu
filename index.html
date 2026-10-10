@@ -41,7 +41,8 @@ header{position:sticky;top:0;z-index:40;background:rgba(255,255,255,.92);backdro
 .big-en{font-size:28px;font-weight:700;line-height:1.25}
 .ko{color:var(--sub);margin-top:6px;font-size:16px}
 .emoji{font-size:44px;line-height:1}
-.check.done{background:#10b981;color:#fff;border-color:#10b981}
+.pr{color:var(--violet-d);font-family:Jua,system-ui,sans-serif;font-size:19px;margin-top:4px}
+.line .pr{font-size:15px;margin-top:2px}
 .opt{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;border-radius:18px;border:2px solid #e7e9f3;background:#fff;margin-bottom:10px;font-size:17px}
 .opt.right{border-color:#10b981;background:#ecfdf5}
 .opt.wrong{border-color:#fb923c;background:#fff7ed;animation:shake .35s}
@@ -131,7 +132,7 @@ label.muted{display:block;margin-top:12px}
  <div class="card"><div class="muted">들을 월드를 골라요</div><div id="lsWorlds" class="mt"></div></div>
  <div id="lsNow" class="card mt center"></div>
  <div class="row mt" style="justify-content:center;gap:14px"><button class="round" onclick="lsMove(-1)" aria-label="이전">⏮️</button><button id="lsPlayBtn" class="round main" onclick="lsToggle()" aria-label="재생">▶️</button><button class="round" onclick="lsMove(1)" aria-label="다음">⏭️</button></div>
- <div class="row mt" style="justify-content:center"><button id="lsRepeat" class="tg" onclick="lsOpt('listenRepeat')">🔁 반복</button><button id="lsKo" class="tg" onclick="lsOpt('listenKo')">🇰🇷 뜻도 읽기</button></div>
+ <div class="row mt" style="justify-content:center"><button id="lsRepeat" class="tg" onclick="lsOpt('listenRepeat')">🔁 반복</button><button id="lsKo" class="tg" onclick="lsOpt('listenKo')">🇰🇷 뜻 먼저 읽기</button></div>
  <p class="muted center">밥 먹을 때 틀어 두세요. 학습 기록과 별에는 영향이 없어요.</p>
  <div id="lsList" class="card mt"></div>
 </section>
@@ -150,6 +151,21 @@ label.muted{display:block;margin-top:12px}
  </div>
  <div class="card mt"><div class="kr h">📶 난이도</div><p class="muted">진도는 난이도마다 따로 저장돼요. 바꿔도 다른 난이도의 진도는 그대로예요.</p><div id="levelList"></div></div>
  <div class="card mt">
+  <div class="kr h">✏️ 우리 아이 말</div>
+  <p class="muted">아이가 실제로 자주 하는 말을 넣어 보세요. 3개 이상이면 홈 화면에 <b>⭐ 말 모음</b> 월드가 생겨요. 이름 자리는 <b>{EN}</b> 이라고 쓰면 영어 이름으로 바뀌어요.</p>
+  <div id="customHint" class="muted" style="color:var(--violet-d)"></div>
+  <label class="muted" for="cEn">영어 문장</label><input id="cEn" class="inp" maxlength="120" autocomplete="off" autocapitalize="sentences" placeholder="Mom, let's play Roblox!" oninput="previewPron()">
+  <div id="cPrev" class="muted"></div>
+  <label class="muted" for="cKo">한국어 뜻</label><input id="cKo" class="inp" maxlength="80" autocomplete="off" placeholder="엄마, 로블록스 같이 해요!">
+  <div class="row"><div style="flex:1;min-width:110px"><label class="muted" for="cEmoji">이모지 (선택)</label><input id="cEmoji" class="inp" maxlength="4" placeholder="🎮"></div><div style="flex:3;min-width:180px"><label class="muted" for="cPr">한글 발음 (선택 · 비우면 자동)</label><input id="cPr" class="inp" maxlength="160" autocomplete="off" placeholder="맘, 렛츠 플레이 로블록스!"></div></div>
+  <button class="btn btn-main mt" onclick="addCustom()">➕ 추가</button>
+  <div id="customList" class="mt"></div>
+  <details class="mt"><summary class="muted">📋 여러 개 한꺼번에 붙여 넣기</summary>
+   <p class="muted">한 줄에 하나씩 <b>영어 | 한국어 | 이모지 | 발음</b> 으로 적어요. (이모지·발음은 생략해도 돼요)</p>
+   <textarea id="cBulk" class="inp" rows="5" style="font-family:inherit;font-size:14px" placeholder="Can I have more phone time? | 휴대폰 시간 더 주세요. | 📱&#10;Five more minutes! | 5분만 더요!"></textarea>
+   <button class="btn btn-soft mt" onclick="bulkAdd()">📥 한꺼번에 추가</button></details>
+ </div>
+ <div class="card mt">
   <div class="kr h">💾 기록 백업 · 복원</div>
   <p class="muted">기록은 이 폰의 브라우저에만 저장돼요. 폰을 바꾸거나 브라우저 데이터를 지우기 전에 백업해 두세요.</p>
   <button class="btn btn-soft" onclick="makeBackup()">📤 백업 코드 만들기</button>
@@ -162,7 +178,8 @@ label.muted{display:block;margin-top:12px}
 </div>
 <div id="toast" class="hide"></div>
 
-<script src="content.js?v=5"></script>
+<script src="content.js?v=6"></script>
+<script src="pron.js?v=1"></script>
 <script>
 const STICKERS=['🐶','🐱','🐰','🦊','🐼','🐨','🐯','🦁','🐸','🐵','🦄','🐙','🦋','🐞','🌸','🌈','🍓','🍩','🧁','🎀','👑','💎','🚀','🎈','🍭','🐳','🦕','🌻','🍀','🐧'];
 const AVATARS=['🦄','🐰','🐱','🐶','🦊','🐼','🐯','🌷','🌻','⭐','🙂','😎'];
@@ -177,12 +194,13 @@ function ymd(d=new Date()){return d.getFullYear()+'-'+String(d.getMonth()+1).pad
 function blankProg(){return {worldDays:{},worldDone:{},worldLast:{}}}
 function normalize(s){
  s=s&&typeof s==='object'?s:{};
- const st=Object.assign({name:'지수',nameEn:'Jisu',avatar:'🦄',level:'beginner',stars:0,days:{},stickers:[],missions:{},todayMission:null,rate:.8,prog:{},runs:{date:'',map:{}},listenKo:false,listenRepeat:true},s);
+ const st=Object.assign({name:'지수',nameEn:'Jisu',avatar:'🦄',level:'beginner',stars:0,days:{},stickers:[],missions:{},todayMission:null,rate:.8,prog:{},runs:{date:'',map:{}},listenKo:false,listenRepeat:true,custom:[]},s);
  if(s.worldDays&&!s.prog)st.prog={beginner:{worldDays:s.worldDays||{},worldDone:s.worldDone||{},worldLast:s.worldLast||{}}};
  delete st.worldDays;delete st.worldDone;delete st.worldLast;
  if(!LEVELS[st.level])st.level='beginner';
  if(!st.prog||typeof st.prog!=='object')st.prog={};
  for(const k in LEVELS){const p=st.prog[k]=Object.assign(blankProg(),st.prog[k]||{});for(const id in p.worldDays)if(p.worldDays[id]>=DAYS)p.worldDone[id]=true}
+ st.custom=(Array.isArray(st.custom)?st.custom:[]).filter(c=>c&&typeof c.en==='string'&&typeof c.ko==='string'&&c.en.trim()&&c.ko.trim()).slice(0,100).map(c=>({en:c.en.slice(0,120),ko:c.ko.slice(0,80),e:String(c.e||'💬').slice(0,8),pr:String(c.pr||'').slice(0,160)}));
  st.stars=+st.stars||0;
  if(!Array.isArray(st.stickers))st.stickers=[];
  if(!st.days||typeof st.days!=='object')st.days={};
@@ -202,13 +220,26 @@ let state=loadState(),cw=0,stage=0,S=null,voices=[],playId=0;
 function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){toast('⚠️ 기록을 저장하지 못했어요.')}}
 
 /* ---------- 도우미 ---------- */
-const LV=()=>LEVELS[state.level], W=()=>LV().worlds, PR=()=>state.prog[state.level], isAdult=()=>LV().adult;
+const LV=()=>LEVELS[state.level], PR=()=>state.prog[state.level], isAdult=()=>LV().adult;
+// 우리 아이 말(설정에서 추가)이 3개 이상이면 맨 뒤에 '말 모음' 월드가 생겨요. 항상 열려 있고 순서와 상관없어요.
+function customWorld(){
+ const c=state.custom;if(c.length<3)return null;
+ return {id:'custom',custom:true,icon:'⭐',name:`${state.name} 말 모음`,desc:'우리가 자주 쓰는 말',bg:'#fef9c3',
+  phrases:c.map(x=>({en:x.en,ko:x.ko,e:x.e||'💬',pr:x.pr})),patterns:[],dialogs:[],
+  missions:c.map(x=>`실제 상황에서 "${x.en}" 라고 영어로 말해 보기`)};
+}
+const W=()=>{const b=LV().worlds,c=customWorld();return c?[...b,c]:b};
+const showPron=()=>!!LV().pron;
+function NAMES(){const e=state.nameEn.toLowerCase().split(/\s+/),k=state.name.split(/\s+/),m={};e.forEach((w,i)=>{m[w]=e.length===k.length?k[i]:(i?'':state.name)});return m}
+// 한글 발음 글자 (직접 적은 발음이 우선, 없으면 사전으로 만들고, 모르는 단어가 있으면 보여주지 않아요)
+function prText(en,pr){if(!showPron())return '';if(pr)return T(pr);const r=pronOf(en,NAMES());return r.miss.length?'':r.text}
+function prHtml(en,pr){const t=prText(en,pr);return t?`<div class="pr">${esc(t)}</div>`:''}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
 function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function pick(a,i){return a[((i%a.length)+a.length)%a.length]}
 function pickN(a,n,ex=[]){return shuffle(a.filter(x=>!ex.includes(x))).slice(0,n)}
-function unlocked(i){return i===0||!!PR().worldDone[W()[i-1].id]}
-function latestWorld(){let i=0;while(i+1<W().length&&unlocked(i+1))i++;return i}
+function unlocked(i){return i===0||!!W()[i].custom||!!PR().worldDone[W()[i-1].id]}
+function latestWorld(){const n=W().filter(w=>!w.custom).length;let i=0;while(i+1<n&&unlocked(i+1))i++;return i}
 function toast(m){const t=$('toast');t.textContent=m;t.classList.remove('hide');clearTimeout(window._tt);window._tt=setTimeout(()=>t.classList.add('hide'),2400)}
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 // 받침에 맞는 조사 (지수야 / 민준아)
@@ -218,7 +249,7 @@ function T(s){
  return String(s).replace(/\{EN\}/g,state.nameEn).replace(/\{KO야\}/g,k+(b?'아':'야')).replace(/\{KO이야\}/g,k+(b?'이야':'야'))
   .replace(/\{KO이에요\}/g,k+(b?'이에요':'예요')).replace(/\{KO는\}/g,k+(b?'이는':'는')).replace(/\{KO가\}/g,k+(b?'이가':'가')).replace(/\{KO\}/g,k);
 }
-const tx=p=>({en:T(p.en),ko:T(p.ko),e:p.e});
+const tx=p=>({en:T(p.en),ko:T(p.ko),e:p.e,pr:p.pr});
 function show(id){['home','session','listen','settings'].forEach(x=>$(x).classList.toggle('hide',x!==id));window.scrollTo({top:0})}
 
 /* ---------- 음성 ---------- */
@@ -237,14 +268,11 @@ function toggleSpeed(){const r=RATES[(rateIdx()+1)%RATES.length];state.rate=r.r;
 document.addEventListener('click',e=>{
  requestWake();
  const s=e.target.closest('[data-say]');if(s){playId++;speak(s.dataset.say)}
- const c=e.target.closest('[data-check]');if(c)selfCheck(c);
  const m=e.target.closest('[data-mic]');if(m)toggleMic(m);
  const p=e.target.closest('[data-play]');if(p)playMine(p.dataset.play);
  const r=e.target.closest('[data-reveal]');if(r)reveal(r);
  const l=e.target.closest('[data-ls]');if(l)lsJump(+l.dataset.ls);
 });
-function checkBtn(){return `<button class="btn btn-soft check" data-check="0">🗣️ 따라 말하기 0/3</button>`}
-function selfCheck(b){const n=Math.min(3,+b.dataset.check+1);b.dataset.check=n;if(n>=3){b.textContent='🌟 완벽해요!';b.classList.add('done','pop')}else b.textContent=`🗣️ 따라 말하기 ${n}/3`}
 function reveal(b){const w=b.closest('.box,.line');w.querySelectorAll('.reveal').forEach(x=>x.classList.remove('hide'));w.querySelectorAll('.ask').forEach(x=>x.classList.add('hide'));b.remove();const s=w.querySelector('[data-say]');if(s){playId++;speak(s.dataset.say)}}
 
 /* ---------- 녹음 & 이렇게 들렸어 ---------- */
@@ -290,7 +318,6 @@ function stopRec(){
  const r=rec;if(!r)return;rec=null;r.stopped=true;clearTimeout(r.timer);
  r.btn.textContent='🎙️ 다시 말해보기';r.btn.classList.remove('recording');
  try{if(r.sr)r.sr.stop()}catch(e){}
- const c=r.wrapEl.querySelector('[data-check]');if(c&&+c.dataset.check<3)selfCheck(c);
  if(r.mr&&r.mr.state!=='inactive')r.mr.stop();else showRec(r,false);
 }
 function showRec(r,autoplay){
@@ -351,7 +378,7 @@ function renderWorlds(){
  $('worlds').innerHTML=W().map((w,i)=>{
   const done=!!p.worldDone[w.id],lock=!unlocked(i),d=p.worldDays[w.id]||0,pct=done?100:Math.min(100,d*100/DAYS),td=p.worldLast[w.id]===today;
   const info=done?`클리어! (${d}일)`:lock?'이전 월드 클리어 후 열려요':td?`${d} / ${DAYS}일 · 오늘 완료`:`${d} / ${DAYS}일`;
-  const ph=!done&&!lock&&!td?`<div class="phase">다음: ${d+1}일차 · ${PHASES[phaseOf(d)]}</div>`:'';
+  const ph=!done&&!lock&&!td&&!w.custom?`<div class="phase">다음: ${d+1}일차 · ${PHASES[phaseOf(d)]}</div>`:'';
   return `<button class="world ${lock?'locked':''}" style="background:linear-gradient(135deg,${w.bg},#fff)" onclick="openWorld(${i})">
    <div class="row" style="justify-content:space-between"><span style="font-size:36px">${w.icon}</span><span style="font-size:22px">${done?'🏆':lock?'🔒':td?'✅':'▶️'}</span></div>
    <div class="kr" style="font-size:19px;margin-top:8px">${i+1}. ${w.name}</div><div class="muted">${w.desc}</div>
@@ -373,11 +400,19 @@ function dayFor(w){
 function runCount(w){const r=state.runs;return r.date===ymd()?(r.map[state.level+'|'+w.id]||0):0}
 function addRun(w){if(state.runs.date!==ymd())state.runs={date:ymd(),map:{}};const k=state.level+'|'+w.id;state.runs.map[k]=(state.runs.map[k]||0)+1}
 function scramble(en){const t=en.split(' ');let s=shuffle(t);for(let k=0;k<8&&s.join(' ')===en;k++)s=shuffle(t);return s}
+// 우리 아이 말 월드: 내가 넣은 문장만으로 간단하게 (문장 보기 → 듣고 고르기 → 퍼즐 → 완료)
+function buildCustomSession(w){
+ const ph=w.phrases.map(tx),longs=ph.filter(p=>p.en.split(' ').length>=3),news=pickN(ph,Math.min(4,ph.length)),pz=pickN(longs,Math.min(2,longs.length));
+ const quiz=pickN(ph,3).map(t=>({t,done:false,opts:shuffle([t,...pickN(ph.filter(p=>p.ko!==t.ko),2)])}));
+ const stages=[['new','⭐ 우리가 자주 하는 말'],['quiz','👂 듣고 고르기'],...(pz.length?[['puzzle','🧱 문장 퍼즐']]:[]),['finish','🎉 마무리']];
+ return {w,day:PR().worldDays[w.id]||0,phase:'learn',replay:false,run:0,review:[],news,all:ph,pattern:null,quiz,qi:0,puzzles:pz.map(p=>({p,tokens:scramble(p.en)})),pi:0,picked:[],dialog:[],tried:new Set(),stages:stages.map(([key,name])=>({key,name}))};
+}
 function startWorld(i){
  cw=i;S=buildSession(i);stage=0;
  show('session');renderStage();requestWake();
 }
 function buildSession(i){
+ if(W()[i].custom)return buildCustomSession(W()[i]);
  const w=W()[i],{day,replay}=dayFor(w),run=runCount(w),phase=phaseOf(day);
  const ph=w.phrases.map(tx),prev=(i>0?W()[i-1].phrases:isAdult()?WARMUP_ADULT:WARMUP).map(tx);
  const learned=ph.slice(0,Math.min(ph.length,day*2+2)),long=p=>p.en.split(' ').length>=3,longs=ph.filter(long);
@@ -389,7 +424,7 @@ function buildSession(i){
  }else{news=pickN(ph,2);review=[...pickN(ph,1,news),...pickN(prev,1)]}
  // 같은 날 다시 하면 패턴·대화가 바뀌어요
  const pt=pick(w.patterns,day+run),pattern={en:T(pt.en),ko:T(pt.ko),slots:pt.slots.map(tx)};
- const dialog=pick(w.dialogs,day+run).map(([who,en,ko])=>[who,T(en),T(ko)]);
+ const dialog=pick(w.dialogs,day+run).map(([who,en,ko,pr])=>[who,T(en),T(ko),pr]);
  let qt;
  if(phase==='boss')qt=shuffle(ph);
  else if(phase==='learn'&&!replay)qt=shuffle([news[0],news[1],day>0?review[0]:pick(ph,day*2+2)]);
@@ -419,12 +454,12 @@ function renderStage(){
  if(st.key==='quiz')setTimeout(()=>{if(S&&S.stages[stage].key==='quiz'&&!$('session').classList.contains('hide'))speak(S.quiz[S.qi].t.en)},400);
 }
 function phraseBox(p){
- if(!isAdult())return `<div class="box"><div class="emoji">${p.e}</div><div class="en big-en mt">${esc(p.en)}</div><div class="ko kr">${esc(p.ko)}</div><div class="row mt" style="justify-content:center"><button class="btn btn-soft" data-say="${esc(p.en)}">🔊 듣기</button>${micBtn()}${checkBtn()}</div>${recOut()}</div>`;
+ if(!isAdult())return `<div class="box"><div class="emoji">${p.e}</div><div class="en big-en mt">${esc(p.en)}</div>${prHtml(p.en,p.pr)}<div class="ko kr">${esc(p.ko)}</div><div class="row mt" style="justify-content:center"><button class="btn btn-soft" data-say="${esc(p.en)}">🔊 듣기</button>${micBtn()}</div>${recOut()}</div>`;
  // 성인 모드: 한국어를 보고 영어로 먼저 말한 뒤 정답 확인
  return `<div class="box"><div class="emoji">${p.e}</div><div class="kr" style="font-size:22px;margin-top:10px">${esc(p.ko)}</div><div class="ask muted mt">💭 영어로 먼저 말해 보세요</div>
   <div class="reveal hide"><div class="en big-en mt">${esc(p.en)}</div></div>
   <div class="row mt" style="justify-content:center"><button class="btn btn-main" data-reveal>👀 정답 보기</button>${micBtn()}</div>
-  <div class="row reveal hide" style="justify-content:center;margin-top:8px"><button class="btn btn-soft" data-say="${esc(p.en)}">🔊 듣기</button>${checkBtn()}</div>${recOut()}</div>`;
+  <div class="row reveal hide" style="justify-content:center;margin-top:8px"><button class="btn btn-soft" data-say="${esc(p.en)}">🔊 듣기</button></div>${recOut()}</div>`;
 }
 const sayHint=()=>isAdult()?'한국어를 보고 영어로 먼저 말한 뒤, 정답을 확인해요.':'듣고 3번씩 따라 말해봐요.';
 const STAGE_VIEWS={
@@ -432,8 +467,8 @@ const STAGE_VIEWS={
  new:t=>wrap(t,S.phase==='mix'?'배운 문장을 다시 꺼내 써 봐요.':isAdult()?sayHint():'뜻을 생각하면서 따라 말해봐요.',S.news.map(phraseBox).join('')+nextBtn()),
  speakall:t=>wrap(t,`이 월드의 문장 ${S.all.length}개를 모두 말해 봐요!`,S.all.map(phraseBox).join('')+nextBtn()),
  sub:t=>{const pt=S.pattern;return wrap(t,'문장 모양은 그대로! 단어만 바꿔봐요.',`<div class="box" style="background:#f5f3ff">
-  <div class="en big-en">${esc(pt.en).replace('___','<span style="color:var(--violet)">___</span>')}</div><div class="ko kr">${esc(pt.ko)}</div>
-  <div class="mt">${pt.slots.map((s,i)=>`<button class="chip" onclick="pickSlot(${i},this)">${s.e} <span class="en">${esc(s.en)}</span></button>`).join('')}</div>
+  <div class="en big-en">${esc(pt.en).replace('___','<span style="color:var(--violet)">___</span>')}</div>${prHtml(pt.en)}<div class="ko kr">${esc(pt.ko)}</div>
+  <div class="mt">${pt.slots.map((s,i)=>`<button class="chip" onclick="pickSlot(${i},this)">${s.e} <span class="en">${esc(s.en)}</span>${prText(s.en,s.pr)?` <span class="muted">(${esc(prText(s.en,s.pr))})</span>`:''}</button>`).join('')}</div>
   <div id="swapCount" class="muted mt">단어 ${pt.slots.length}개를 모두 넣어 말해보자! (0/${pt.slots.length})</div>
   <div id="swapOut" class="mt"></div></div>${nextBtn()}`)},
  quiz:t=>{const q=S.quiz[S.qi];return wrap(t,`문제 ${S.qi+1}/${S.quiz.length} · 잘 듣고 알맞은 뜻을 골라요!`,`<div class="center"><button class="btn btn-main" style="font-size:20px;padding:16px 28px" data-say="${esc(q.t.en)}">🔊 다시 듣기</button></div>
@@ -444,12 +479,13 @@ const STAGE_VIEWS={
   <div class="center mt">${z.tokens.map((w,i)=>`<button class="tok en" onclick="tapTok(${i},this)">${esc(w)}</button>`).join('')}</div>
   <div class="center mt"><button class="btn btn-soft" onclick="resetPuzzle()">↩️ 다시 하기</button></div>
   <div id="pzMsg" class="center kr mt" style="min-height:28px;font-size:18px"></div>${nextBtn()}`)},
+ finish:t=>wrap(t,'오늘도 우리 말을 영어로 말해 봤어요!',`<div class="center"><button class="btn btn-green" style="font-size:18px;padding:16px 28px" onclick="finishToday()">${isAdult()?'✅ 오늘 학습 완료!':'🎉 오늘 미션 완료!'}</button></div>`),
  dialog:t=>{
   const ad=isAdult(),ms=state.level==='master',av=state.avatar;
   const sub=ms?`내 대사(${av})는 한국어만 보여요. 영어로 말한 뒤 👀를 눌러 확인해요.`:ad?`상대 대사는 🔊로 듣고, 내 대사(${av})를 영어로 말해 보세요.`:`👩 상대방 대사는 엄마·아빠가 읽어주고, ${esc(T('{KO는}'))} ${av} 대사를 말해요!`;
   return wrap(t,sub,`<div class="row" style="justify-content:center;margin-bottom:12px"><button class="btn btn-soft" onclick="playDialog(false)">▶️ 전체 듣기</button><button class="btn btn-soft" onclick="playDialog(true)">🗣️ 따라 읽기</button></div>
-  ${S.dialog.map(([who,en,ko])=>{const me=who==='me',hide=ms&&me;return `<div class="line ${who}"><div class="muted">${me?av+' '+esc(state.name):(ad?'🧑':'👩')+' 상대방'}</div>
-   ${hide?`<div class="kr" style="font-size:17px">${esc(ko)}</div><div class="reveal hide"><div class="en" style="font-size:20px">${esc(en)}</div></div>`:`<div class="en" style="font-size:20px">${esc(en)}</div><div class="ko kr" style="font-size:14px">${esc(ko)}</div>`}
+  ${S.dialog.map(([who,en,ko,pr])=>{const me=who==='me',hide=ms&&me;return `<div class="line ${who}"><div class="muted">${me?av+' '+esc(state.name):(ad?'🧑':'👩')+' 상대방'}</div>
+   ${hide?`<div class="kr" style="font-size:17px">${esc(ko)}</div><div class="reveal hide"><div class="en" style="font-size:20px">${esc(en)}</div></div>`:`<div class="en" style="font-size:20px">${esc(en)}</div>${prHtml(en,pr)}<div class="ko kr" style="font-size:14px">${esc(ko)}</div>`}
    <div class="row" style="margin-top:6px">${hide?'<button class="btn btn-soft sm" data-reveal>👀 확인</button>':''}<button class="btn btn-soft sm ${hide?'reveal hide':''}" data-say="${esc(en)}">🔊 듣기</button>${me?micBtn('sm'):''}</div>${me?recOut():''}</div>`}).join('')}
   <div class="center mt"><button class="btn btn-green" style="font-size:18px;padding:16px 28px" onclick="finishToday()">${ad?'✅ 오늘 학습 완료!':'🎉 오늘 미션 완료!'}</button></div>`)}
 };
@@ -458,7 +494,7 @@ function pickSlot(i,btn){
  const pt=S.pattern,s=pt.slots[i],en=pt.en.replace('___',s.en),ko=pt.ko.replace('___',s.ko);
  S.tried.add(i);
  $('swapCount').textContent=S.tried.size>=pt.slots.length?'🌟 단어를 모두 바꿔 말해봤어요!':`단어 ${pt.slots.length}개를 모두 넣어 말해보자! (${S.tried.size}/${pt.slots.length})`;
- $('swapOut').innerHTML=`<div class="emoji pop">${s.e}</div><div class="en big-en mt">${esc(en)}</div><div class="ko kr">${esc(ko)}</div><div class="row mt" style="justify-content:center"><button class="btn btn-soft" data-say="${esc(en)}">🔊 듣기</button>${micBtn()}${checkBtn()}</div>${recOut()}`;
+ $('swapOut').innerHTML=`<div class="emoji pop">${s.e}</div><div class="en big-en mt">${esc(en)}</div>${prHtml(en)}<div class="ko kr">${esc(ko)}</div><div class="row mt" style="justify-content:center"><button class="btn btn-soft" data-say="${esc(en)}">🔊 듣기</button>${micBtn()}</div>${recOut()}`;
  playId++;speak(en);
 }
 function answer(i,btn){
@@ -503,7 +539,7 @@ function finishToday(){
  if(!state.days[today]){state.days[today]=true;state.stars+=3;earned=3;sticker=giveSticker()}
  if(!p.worldDone[w.id]&&p.worldDays[w.id]>=DAYS){
   p.worldDone[w.id]=true;bonus=5;state.stars+=5;if(!sticker)sticker=giveSticker();
-  const nx=W()[cw+1];unlockMsg=nx?`🏆 보스 클리어! ${nx.icon} ${nx.name} 월드가 열렸어요!`:(ad?'👑 모든 월드 클리어! 정말 대단해요!':`👑 모든 월드 클리어! ${T('{KO는}')} 영어 마스터!`);
+  const nx=W()[cw+1];unlockMsg=w.custom?'⭐ 말 모음 10일 클리어! 새 말을 더 추가해 봐요.':nx?`🏆 보스 클리어! ${nx.icon} ${nx.name} 월드가 열렸어요!`:(ad?'👑 모든 월드 클리어! 정말 대단해요!':`👑 모든 월드 클리어! ${T('{KO는}')} 영어 마스터!`);
  }
  addRun(w);
  const runs=runCount(w),mission=T(pick(w.missions,S.day)),mDone=!!state.missions[today];
@@ -530,21 +566,21 @@ function missionDone(){
 const LS={wi:0,items:[],i:0,playing:false};
 function lsItems(w){
  const items=w.phrases.map(p=>Object.assign(tx(p),{tag:'오늘의 문장'}));
- w.patterns.forEach(pt=>pt.slots.forEach(s=>items.push({en:T(pt.en.replace('___',s.en)),ko:T(pt.ko.replace('___',s.ko)),e:s.e,tag:'바꿔 말하기'})));
- w.dialogs.forEach((d,k)=>d.forEach(([who,en,ko])=>items.push({en:T(en),ko:T(ko),e:who==='me'?state.avatar:'🧑',tag:`대화 ${k+1}`})));
+ (w.patterns||[]).forEach(pt=>pt.slots.forEach(s=>items.push({en:T(pt.en.replace('___',s.en)),ko:T(pt.ko.replace('___',s.ko)),e:s.e,tag:'바꿔 말하기'})));
+ (w.dialogs||[]).forEach((d,k)=>d.forEach(([who,en,ko,pr])=>items.push({en:T(en),ko:T(ko),pr,e:who==='me'?state.avatar:'🧑',tag:`대화 ${k+1}`})));
  return items;
 }
 function openListen(){LS.playing=false;lsSetWorld(cw<W().length&&unlocked(cw)?cw:latestWorld());show('listen');requestWake()}
 function lsSetWorld(i){playId++;LS.playing=false;if('speechSynthesis' in window)speechSynthesis.cancel();LS.wi=i;LS.items=lsItems(W()[i]);LS.i=0;renderListen()}
 function renderListen(){
  $('lsWorlds').innerHTML=W().map((w,i)=>unlocked(i)?`<button class="chip ${i===LS.wi?'active':''}" onclick="lsSetWorld(${i})">${w.icon} ${esc(w.name)}</button>`:'').join('');
- $('lsList').innerHTML=LS.items.map((it,k)=>`<button class="lsItem ${k===LS.i?'on':''}" data-ls="${k}"><span style="font-size:22px">${it.e}</span><span><span class="en">${esc(it.en)}</span><br><span class="muted">${esc(it.ko)}</span></span></button>`).join('');
+ $('lsList').innerHTML=LS.items.map((it,k)=>`<button class="lsItem ${k===LS.i?'on':''}" data-ls="${k}"><span style="font-size:22px">${it.e}</span><span><span class="en">${esc(it.en)}</span><br><span class="muted">${prText(it.en,it.pr)?esc(prText(it.en,it.pr))+' · ':''}${esc(it.ko)}</span></span></button>`).join('');
  $('lsRepeat').classList.toggle('on',state.listenRepeat);$('lsKo').classList.toggle('on',state.listenKo);
  renderLsNow();
 }
 function renderLsNow(){
  const it=LS.items[LS.i];if(!it)return;
- $('lsNow').innerHTML=`<div class="muted">${esc(it.tag)} · ${LS.i+1} / ${LS.items.length}</div><div class="emoji mt">${it.e}</div><div class="en big-en mt">${esc(it.en)}</div><div class="ko kr" style="font-size:18px">${esc(it.ko)}</div>`;
+ $('lsNow').innerHTML=`<div class="muted">${esc(it.tag)} · ${LS.i+1} / ${LS.items.length}</div><div class="emoji mt">${it.e}</div><div class="en big-en mt">${esc(it.en)}</div>${prHtml(it.en,it.pr)}<div class="ko kr" style="font-size:18px">${esc(it.ko)}</div>`;
  $('lsPlayBtn').textContent=LS.playing?'⏸️':'▶️';
  document.querySelectorAll('.lsItem').forEach((b,k)=>b.classList.toggle('on',k===LS.i));
 }
@@ -558,8 +594,8 @@ async function lsLoop(id){
  while(id===playId&&LS.playing){
   if(LS.i>=LS.items.length){if(state.listenRepeat)LS.i=0;else{LS.playing=false;LS.i=0;renderLsNow();return}}
   renderLsNow();const it=LS.items[LS.i];
+  if(state.listenKo){await say(it.ko,'ko');if(id!==playId)return;await wait(350);if(id!==playId)return}
   await say(it.en);if(id!==playId)return;
-  if(state.listenKo){await wait(350);if(id!==playId)return;await say(it.ko,'ko');if(id!==playId)return}
   await wait(1300);if(id!==playId)return;
   LS.i++;
  }
@@ -569,9 +605,43 @@ async function lsLoop(id){
 let pendingAvatar=null;
 function openSettings(){clearRec();playId++;LS.playing=false;if('speechSynthesis' in window)speechSynthesis.cancel();pendingAvatar=state.avatar;$('inName').value=state.name;$('inNameEn').value=state.nameEn;$('backupOut').classList.add('hide');renderSettings();show('settings')}
 function renderSettings(){
+ renderCustom();
  $('avatarRow').innerHTML=AVATARS.map(a=>`<button class="av ${a===pendingAvatar?'active':''}" onclick="pendingAvatar='${a}';renderSettings()">${a}</button>`).join('');
  $('levelList').innerHTML=Object.entries(LEVELS).map(([k,l])=>`<button class="lvl ${k===state.level?'active':''}" onclick="setLevel('${k}')"><div class="kr" style="font-size:19px">${l.icon} ${l.name}${k===state.level?' <span class="muted">· 지금</span>':''}</div><div class="muted" style="font-size:14px;margin-top:2px">${l.who} — ${l.desc}</div></button>`).join('');
 }
+/* 우리 아이 말 */
+function renderCustom(){
+ const c=state.custom;
+ $('customList').innerHTML=c.length?c.map((x,i)=>`<div class="lsItem" style="cursor:default"><span style="font-size:22px">${esc(x.e||'💬')}</span><span style="flex:1"><span class="en">${esc(x.en)}</span><br><span class="muted">${esc(x.ko)}${x.pr?' · '+esc(x.pr):''}</span></span><button class="btn btn-soft sm" onclick="delCustom(${i})" aria-label="삭제">🗑️</button></div>`).join(''):'<div class="muted">아직 없어요. 아이가 자주 하는 말을 넣어 보세요!</div>';
+ $('customHint').textContent=c.length>=3?`✅ 홈 화면 맨 아래에 "⭐ ${state.name} 말 모음" 월드가 열려 있어요. (${c.length}개)`:`지금 ${c.length}개 · 3개 이상 넣으면 홈 화면에 "⭐ 말 모음" 월드가 생겨요.`;
+}
+function previewPron(){
+ const en=$('cEn').value.trim(),el=$('cPrev');
+ if(!en){el.textContent='';return}
+ const r=pronOf(T(en),NAMES());
+ el.textContent=r.miss.length?`🔤 발음 사전에 없는 단어: ${r.miss.join(', ')} → 아래 "한글 발음"에 직접 적어 주세요`:'🔤 자동 발음: '+r.text;
+}
+function pushCustom(en,ko,e,pr){
+ en=en.replace(/\s+/g,' ').trim();ko=ko.trim();
+ if(!en||!ko)return 'empty';
+ if(!/[A-Za-z]/.test(en))return 'noen';
+ if(state.custom.length>=100)return 'full';
+ state.custom.push({en:en.slice(0,120),ko:ko.slice(0,80),e:(e||'').trim().slice(0,8)||'💬',pr:(pr||'').trim().slice(0,160)});return '';
+}
+function addCustom(){
+ const r=pushCustom($('cEn').value,$('cKo').value,$('cEmoji').value,$('cPr').value);
+ if(r==='empty')return toast('영어 문장과 한국어 뜻을 둘 다 적어 주세요.');
+ if(r==='noen')return toast('영어 문장은 알파벳으로 적어 주세요.');
+ if(r==='full')return toast('최대 100개까지 넣을 수 있어요.');
+ save();['cEn','cKo','cEmoji','cPr'].forEach(id=>$(id).value='');$('cPrev').textContent='';renderCustom();toast('✅ 추가했어요!');
+}
+function bulkAdd(){
+ let n=0,bad=0;
+ $('cBulk').value.split(/\n/).forEach(l=>{if(!l.trim())return;const [en,ko,e,pr]=l.split('|');const r=pushCustom(en||'',ko||'',e,pr);if(r)bad++;else n++});
+ if(n){save();$('cBulk').value='';renderCustom()}
+ toast(n?`✅ ${n}개 추가했어요!${bad?` (${bad}줄은 건너뛰었어요)`:''}`:'추가할 줄이 없어요. 형식: 영어 | 한국어');
+}
+function delCustom(i){const x=state.custom[i];if(!x||!confirm(`"${x.en}" 을(를) 지울까요?`))return;state.custom.splice(i,1);save();renderCustom()}
 function saveProfile(){
  const k=$('inName').value.trim(),e=$('inNameEn').value.trim().replace(/\s+/g,' ');
  if(!k)return toast('한글 이름을 적어 주세요.');
