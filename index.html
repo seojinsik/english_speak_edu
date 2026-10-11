@@ -116,7 +116,7 @@ label.muted{display:block;margin-top:12px}
  </div>
  <div id="missionCard" class="card mt hide" style="background:#ecfdf5"></div>
  <div class="card mt"><div id="stickerTitle" class="kr h">🎀 스티커북</div><div id="stickerBook" class="stickers mt"></div></div>
- <div class="mt"><div class="kr" style="font-size:22px">🌈 영어 여행</div><p class="muted">한 월드에서 10일 공부하면 다음 월드가 열려요!<br>1~4일 📘 배우기 · 5~9일 🎲 섞어서 놀기 · 10일 👑 보스 챌린지</p></div>
+ <div class="mt"><div class="kr" style="font-size:22px">🌈 영어 여행</div><p class="muted">한 월드에서 7일 공부하면 다음 월드가 열려요!<br>1~4일 📘 배우기 · 5~6일 🎲 섞어서 놀기 · 7일 👑 보스 챌린지</p></div>
  <div id="worlds" class="worlds"></div>
 </section>
 
@@ -201,7 +201,7 @@ label.muted{display:block;margin-top:12px}
 const STICKERS=['🐶','🐱','🐰','🦊','🐼','🐨','🐯','🦁','🐸','🐵','🦄','🐙','🦋','🐞','🌸','🌈','🍓','🍩','🧁','🎀','👑','💎','🚀','🎈','🍭','🐳','🦕','🌻','🍀','🐧'];
 const AVATARS=['🦄','🐰','🐱','🐶','🦊','🐼','🐯','🌷','🌻','⭐','🙂','😎'];
 const KEY='jisu_english_adventure_v3';
-const DAYS=10, LEARN_DAYS=4; // 1~4일 배우기 · 5~9일 섞어서 놀기 · 10일 보스
+const DAYS=7, LEARN_DAYS=4; // 1~4일 배우기 · 5~6일 섞어서 놀기 · 7일 보스
 const RATES=[{r:.8,label:'🐢 천천히'},{r:.95,label:'🐰 보통'},{r:1.05,label:'🐆 원어민'}];
 const $=id=>document.getElementById(id);
 
@@ -572,7 +572,7 @@ function finishToday(){
  if(!state.days[today]){state.days[today]=true;state.stars+=3;earned=3;sticker=giveSticker()}
  if(!p.worldDone[w.id]&&p.worldDays[w.id]>=DAYS){
   p.worldDone[w.id]=true;bonus=5;state.stars+=5;if(!sticker)sticker=giveSticker();
-  const nx=W()[cw+1];unlockMsg=w.kid?'⭐ 우리 아이 말 10일 클리어! 새 말을 더 추가해 봐요.':nx?`🏆 보스 클리어! ${nx.icon} ${nx.name} 월드가 열렸어요!`:(ad?'👑 모든 월드 클리어! 정말 대단해요!':`👑 모든 월드 클리어! ${T('{KO는}')} 영어 마스터!`);
+  const nx=W()[cw+1];unlockMsg=w.kid?'⭐ 우리 아이 말 7일 클리어! 새 말을 더 추가해 봐요.':nx?`🏆 보스 클리어! ${nx.icon} ${nx.name} 월드가 열렸어요!`:(ad?'👑 모든 월드 클리어! 정말 대단해요!':`👑 모든 월드 클리어! ${T('{KO는}')} 영어 마스터!`);
  }
  addRun(w);
  const runs=runCount(w),mission=T(pick(w.missions,S.day)),mDone=!!state.missions[today];
