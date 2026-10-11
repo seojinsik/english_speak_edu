@@ -153,7 +153,7 @@ label.muted{display:block;margin-top:12px}
  <div class="card mt"><div class="kr h">📶 난이도</div><p class="muted">진도는 난이도마다 따로 저장돼요. 바꿔도 다른 난이도의 진도는 그대로예요.</p><div id="levelList"></div></div>
  <div class="card mt">
   <div class="kr h">✏️ 우리 아이 말</div>
-  <p class="muted">아이가 실제로 자주 하는 말을 넣어 보세요. 3개 이상이면 홈 화면에 <b>⭐ 말 모음</b> 월드가 생겨요. 이름 자리는 <b>{EN}</b> 이라고 쓰면 영어 이름으로 바뀌어요.</p>
+  <p class="muted">아이가 실제로 자주 하는 말을 넣어 보세요. 홈 화면 맨 앞 <b>⭐ 우리 아이 말</b> 월드에서 공부해요. 이름 자리는 <b>{EN}</b> 이라고 쓰면 영어 이름으로 바뀌어요.</p>
   <div id="customHint" class="muted" style="color:var(--violet-d)"></div>
   <label class="muted" for="cEn">영어 문장</label><input id="cEn" class="inp" maxlength="120" autocomplete="off" autocapitalize="sentences" placeholder="Mom, let's play Roblox!" oninput="previewPron()">
   <div id="cPrev" class="muted"></div>
@@ -179,7 +179,7 @@ label.muted{display:block;margin-top:12px}
 </div>
 <div id="toast" class="hide"></div>
 
-<script src="content.js?v=6"></script>
+<script src="content.js?v=7"></script>
 <script src="pron.js?v=2"></script>
 <script>
 const STICKERS=['🐶','🐱','🐰','🦊','🐼','🐨','🐯','🦁','🐸','🐵','🦄','🐙','🦋','🐞','🌸','🌈','🍓','🍩','🧁','🎀','👑','💎','🚀','🎈','🍭','🐳','🦕','🌻','🍀','🐧'];
@@ -222,14 +222,16 @@ function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){toa
 
 /* ---------- 도우미 ---------- */
 const LV=()=>LEVELS[state.level], PR=()=>state.prog[state.level], isAdult=()=>LV().adult;
-// 우리 아이 말(설정에서 추가)이 3개 이상이면 맨 뒤에 '말 모음' 월드가 생겨요. 항상 열려 있고 순서와 상관없어요.
-function customWorld(){
- const c=state.custom;if(c.length<3)return null;
- return {id:'custom',custom:true,icon:'⭐',name:`${state.name} 말 모음`,desc:'우리가 자주 쓰는 말',bg:'#fef9c3',
-  phrases:c.map(x=>({en:x.en,ko:x.ko,e:x.e||'💬',pr:x.pr})),patterns:[],dialogs:[],
-  missions:c.map(x=>`실제 상황에서 "${x.en}" 라고 영어로 말해 보기`)};
+// 우리 아이 말 월드: 항상 열려 있고 목록 맨 앞에 있어요. 설정에서 추가한 말이 여기에 합쳐져요.
+// 초급·중급은 content.js 의 kid 월드에 합치고, 상급·마스터는 3개 이상 넣으면 간단한 월드가 생겨요.
+function userMissions(){return state.custom.map(x=>`실제 상황에서 "${x.en}" 라고 영어로 말해 보기`)}
+function kidWorlds(){
+ const base=LV().worlds,c=state.custom,u=c.map(x=>({en:x.en,ko:x.ko,e:x.e||'💬',pr:x.pr}));
+ if(base.some(w=>w.kid))return base.map(w=>w.kid?Object.assign({},w,{phrases:[...w.phrases,...u],missions:[...w.missions,...userMissions()]}):w);
+ if(c.length<3)return base;
+ return [{id:'kid',kid:true,simple:true,icon:'⭐',name:'우리 아이 말',desc:'우리가 자주 쓰는 말',bg:'#fef9c3',phrases:u,patterns:[],dialogs:[],missions:userMissions()},...base];
 }
-const W=()=>{const b=LV().worlds,c=customWorld();return c?[...b,c]:b};
+const W=kidWorlds;
 const showPron=()=>!!LV().pron;
 function NAMES(){const e=state.nameEn.toLowerCase().split(/\s+/),k=state.name.split(/\s+/),m={};e.forEach((w,i)=>{m[w]=e.length===k.length?k[i]:(i?'':state.name)});return m}
 // 한글 발음 글자 (직접 적은 발음이 우선, 없으면 사전으로 만들고, 모르는 단어가 있으면 보여주지 않아요)
@@ -240,8 +242,8 @@ function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').repl
 function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function pick(a,i){return a[((i%a.length)+a.length)%a.length]}
 function pickN(a,n,ex=[]){return shuffle(a.filter(x=>!ex.includes(x))).slice(0,n)}
-function unlocked(i){return i===0||!!W()[i].custom||!!PR().worldDone[W()[i-1].id]}
-function latestWorld(){const n=W().filter(w=>!w.custom).length;let i=0;while(i+1<n&&unlocked(i+1))i++;return i}
+function unlocked(i){const ws=W();if(ws[i].kid)return true;let j=i-1;while(j>=0&&ws[j].kid)j--;return j<0||!!PR().worldDone[ws[j].id]}
+function latestWorld(){const ws=W();let r=ws.findIndex(w=>!w.kid);for(let i=r+1;i<ws.length;i++)if(!ws[i].kid&&unlocked(i))r=i;return r}
 function toast(m){const t=$('toast');t.textContent=m;t.classList.remove('hide');clearTimeout(window._tt);window._tt=setTimeout(()=>t.classList.add('hide'),2400)}
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 // 받침에 맞는 조사 (지수야 / 민준아)
@@ -381,7 +383,7 @@ function renderWorlds(){
  $('worlds').innerHTML=W().map((w,i)=>{
   const done=!!p.worldDone[w.id],lock=!unlocked(i),d=p.worldDays[w.id]||0,pct=done?100:Math.min(100,d*100/DAYS),td=p.worldLast[w.id]===today;
   const info=done?`클리어! (${d}일)`:lock?'이전 월드 클리어 후 열려요':td?`${d} / ${DAYS}일 · 오늘 완료`:`${d} / ${DAYS}일`;
-  const ph=!done&&!lock&&!td&&!w.custom?`<div class="phase">다음: ${d+1}일차 · ${PHASES[phaseOf(d)]}</div>`:'';
+  const ph=!done&&!lock&&!td&&!w.simple?`<div class="phase">다음: ${d+1}일차 · ${PHASES[phaseOf(d)]}</div>`:'';
   return `<button class="world ${lock?'locked':''}" style="background:linear-gradient(135deg,${w.bg},#fff)" onclick="openWorld(${i})">
    <div class="row" style="justify-content:space-between"><span style="font-size:36px">${w.icon}</span><span style="font-size:22px">${done?'🏆':lock?'🔒':td?'✅':'▶️'}</span></div>
    <div class="kr" style="font-size:19px;margin-top:8px">${i+1}. ${w.name}</div><div class="muted">${w.desc}</div>
@@ -415,9 +417,10 @@ function startWorld(i){
  show('session');renderStage();requestWake();
 }
 function buildSession(i){
- if(W()[i].custom)return buildCustomSession(W()[i]);
+ if(W()[i].simple)return buildCustomSession(W()[i]);
  const w=W()[i],{day,replay}=dayFor(w),run=runCount(w),phase=phaseOf(day);
- const ph=w.phrases.map(tx),prev=(i>0?W()[i-1].phrases:isAdult()?WARMUP_ADULT:WARMUP).map(tx);
+ let pj=i-1;while(pj>=0&&W()[pj].kid)pj--;
+ const ph=w.phrases.map(tx),prev=(pj>=0?W()[pj].phrases:isAdult()?WARMUP_ADULT:WARMUP).map(tx);
  const learned=ph.slice(0,Math.min(ph.length,day*2+2)),long=p=>p.en.split(' ').length>=3,longs=ph.filter(long);
  let news,review;
  if(phase==='learn'){
@@ -542,7 +545,7 @@ function finishToday(){
  if(!state.days[today]){state.days[today]=true;state.stars+=3;earned=3;sticker=giveSticker()}
  if(!p.worldDone[w.id]&&p.worldDays[w.id]>=DAYS){
   p.worldDone[w.id]=true;bonus=5;state.stars+=5;if(!sticker)sticker=giveSticker();
-  const nx=W()[cw+1];unlockMsg=w.custom?'⭐ 말 모음 10일 클리어! 새 말을 더 추가해 봐요.':nx?`🏆 보스 클리어! ${nx.icon} ${nx.name} 월드가 열렸어요!`:(ad?'👑 모든 월드 클리어! 정말 대단해요!':`👑 모든 월드 클리어! ${T('{KO는}')} 영어 마스터!`);
+  const nx=W()[cw+1];unlockMsg=w.kid?'⭐ 우리 아이 말 10일 클리어! 새 말을 더 추가해 봐요.':nx?`🏆 보스 클리어! ${nx.icon} ${nx.name} 월드가 열렸어요!`:(ad?'👑 모든 월드 클리어! 정말 대단해요!':`👑 모든 월드 클리어! ${T('{KO는}')} 영어 마스터!`);
  }
  addRun(w);
  const runs=runCount(w),mission=T(pick(w.missions,S.day)),mDone=!!state.missions[today];
@@ -616,7 +619,7 @@ function renderSettings(){
 function renderCustom(){
  const c=state.custom;
  $('customList').innerHTML=c.length?c.map((x,i)=>`<div class="lsItem" style="cursor:default"><span style="font-size:22px">${esc(x.e||'💬')}</span><span style="flex:1"><span class="en">${esc(x.en)}</span><br><span class="muted">${esc(x.ko)}${x.pr?' · '+esc(x.pr):''}</span></span><button class="btn btn-soft sm" onclick="delCustom(${i})" aria-label="삭제">🗑️</button></div>`).join(''):'<div class="muted">아직 없어요. 아이가 자주 하는 말을 넣어 보세요!</div>';
- $('customHint').textContent=c.length>=3?`✅ 홈 화면 맨 아래에 "⭐ ${state.name} 말 모음" 월드가 열려 있어요. (${c.length}개)`:`지금 ${c.length}개 · 3개 이상 넣으면 홈 화면에 "⭐ 말 모음" 월드가 생겨요.`;
+ $('customHint').textContent=`지금 ${c.length}개 · 홈 화면 맨 앞 "⭐ 우리 아이 말" 월드에서 공부해요.`+(LV().worlds.some(w=>w.kid)?'':' (상급·마스터는 3개 이상 넣으면 월드가 생겨요)');
 }
 function previewPron(){
  const en=$('cEn').value.trim(),el=$('cPrev');
