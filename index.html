@@ -247,7 +247,8 @@ const W=kidWorlds;
 const showPron=()=>!!LV().pron;
 function NAMES(){const e=state.nameEn.toLowerCase().split(/\s+/),k=state.name.split(/\s+/),m={};e.forEach((w,i)=>{m[w]=e.length===k.length?k[i]:(i?'':state.name)});return m}
 // 한글 발음 글자 (직접 적은 발음이 우선, 없으면 사전으로 만들고, 모르는 단어가 있으면 보여주지 않아요)
-function prText(en,pr){if(!showPron())return '';if(pr)return T(pr);const r=pronOf(en,NAMES());return r.miss.length?'':r.text}
+// 발음은 2단어 이상 문장에만 보여줘요 (단어 하나는 안 보여줘요)
+function prText(en,pr){if(!showPron()||String(en).trim().split(/\s+/).length<2)return '';if(pr)return T(pr);const r=pronOf(en,NAMES());return r.miss.length?'':r.text}
 // 발음은 처음엔 숨기고 🔤 버튼을 눌러야 보여요. 직접 적은 발음이 없고 사전으로 만든 건 '(대략)' 표시
 function prHtml(en,pr){const t=prText(en,pr);return t?`<div class="prWrap"><button class="btn btn-soft sm" data-pr>🔤 발음</button><div class="pr hide">${esc(t)}${pr?'':' <span class="muted">(대략)</span>'}</div></div>`:''}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
