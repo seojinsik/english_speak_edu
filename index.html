@@ -194,7 +194,7 @@ label.muted{display:block;margin-top:12px}
 </div>
 <div id="toast" class="hide"></div>
 
-<script src="content.js?v=7"></script>
+<script src="content.js?v=8"></script>
 <script src="pron.js?v=2"></script>
 <script src="parts.js?v=1"></script>
 <script>
@@ -447,14 +447,14 @@ function buildSession(i){
  if(W()[i].simple)return buildCustomSession(W()[i]);
  const w=W()[i],{day,replay}=dayFor(w),run=runCount(w),phase=phaseOf(day);
  let pj=i-1;while(pj>=0&&W()[pj].kid)pj--;
- const ph=w.phrases.map(tx),prev=(pj>=0?W()[pj].phrases:isAdult()?WARMUP_ADULT:WARMUP).map(tx);
+ const ph=w.phrases.map(tx),prev=(pj>=0?W()[pj].phrases:[]).map(tx); // 앞 월드가 없으면(첫 월드) 워밍업 없이 바로 시작해요
  const learned=ph.slice(0,Math.min(ph.length,day*2+2)),long=p=>p.en.split(' ').length>=3,longs=ph.filter(long);
  let news,review;
  if(phase==='learn'){
   news=[pick(ph,day*2),pick(ph,day*2+1)];
   if(replay){review=pickN(learned,2,news);if(review.length<2)review=review.concat(pickN(prev,2-review.length))}
   else review=day>0?[pick(ph,day*2-2),pick(ph,day*2-1)]:pickN(prev,2);
- }else{news=pickN(ph,2);review=[...pickN(ph,1,news),...pickN(prev,1)]}
+ }else{news=pickN(ph,2);review=prev.length?[...pickN(ph,1,news),...pickN(prev,1)]:pickN(ph,2,news)}
  // 같은 날 다시 하면 패턴·대화가 바뀌어요
  const pt=pick(w.patterns,day+run),pattern={en:T(pt.en),ko:T(pt.ko),slots:pt.slots.map(tx)};
  const dialog=pick(w.dialogs,day+run).map(([who,en,ko,pr])=>[who,T(en),T(ko),pr]);
@@ -470,7 +470,7 @@ function buildSession(i){
  const fresh=phase==='learn'&&!replay;
  const stages=phase==='boss'?[['quiz','👑 보스 1 · 듣고 고르기'],['puzzle','👑 보스 2 · 문장 퍼즐'],['speakall','👑 보스 3 · 모두 말하기'],['dialog','👑 보스 4 · 역할극']]
   :[['review',fresh?(day===0?'👋 워밍업':'🔄 어제 배운 말 복습'):'🔄 섞어서 복습'],['new',phase==='mix'?'🎯 오늘의 집중 연습':replay?'🌱 오늘의 문장 한 번 더':'🌱 오늘의 문장'],['sub','🧩 단어 바꿔 말하기'],['quiz','👂 듣고 고르기'],['puzzle','🧱 문장 퍼즐'],['dialog','🎭 역할극']];
- return {w,day,phase,replay,run,review,news,all:ph,pattern,quiz,qi:0,puzzles:pz.map(p=>({p,tokens:scramble(p.en)})),pi:0,picked:[],dialog,tried:new Set(),stages:stages.map(([key,name])=>({key,name}))};
+ return {w,day,phase,replay,run,review,news,all:ph,pattern,quiz,qi:0,puzzles:pz.map(p=>({p,tokens:scramble(p.en)})),pi:0,picked:[],dialog,tried:new Set(),stages:stages.filter(([key])=>key!=='review'||review.length).map(([key,name])=>({key,name}))};
 }
 function wrap(t,s,b){return `<div class="card"><div class="center"><div class="float" style="font-size:44px">${S.w.icon}</div><div class="kr" style="font-size:24px;margin-top:6px">${t}</div><p class="muted">${s}</p></div><div class="mt">${b}</div></div>`}
 function nextBtn(label='다음 단계 →'){return `<div class="center mt"><button class="btn btn-dark" onclick="nextStage()">${label}</button></div>`}

@@ -8,8 +8,6 @@
  * [자주 쓰는 말을 쉽게 넣고 싶다면] 앱 ⚙️설정 → "✏️ 우리 아이 말"에서 폰으로 바로 추가할 수 있어요.
  */
 const P=(en,ko,e,pr)=>({en,ko,e,pr});
-const WARMUP=[P("Hello!","안녕!","👋"),P("Thank you.","고마워요.","🙏")];
-const WARMUP_ADULT=[P("Nice to meet you.","만나서 반가워요.","🤝"),P("How's your day going?","오늘 하루 어때요?","☀️")];
 const W_BEGINNER=[
 {id:'kid',kid:true,icon:'⭐',name:'우리 아이 말',desc:'로블록스·몽치치·강아지 고양이, 우리가 자주 하는 말',bg:'#fef9c3',
  phrases:[P("Mom, let's play Roblox!","엄마, 로블록스 같이 해요!","🎮"),P("Play with me, please!","나랑 같이 해요!","🤝"),P("Can I have more phone time?","휴대폰 시간 더 주세요.","📱"),P("Five more minutes, please.","5분만 더요.","⏰"),P("Look at my character!","내 캐릭터 봐요!","🧍"),P("I'm so close!","거의 다 왔어요!","🏁"),P("That's so fun!","너무 재밌어요!","🤩"),P("I'm done. Thank you!","다 했어요. 고마워요!","✅"),
