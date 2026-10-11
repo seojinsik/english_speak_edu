@@ -103,6 +103,7 @@ label.muted{display:block;margin-top:12px}
   <p id="helloSub" class="muted" style="font-size:15px"></p>
   <button id="levelPill" class="pill mt" style="background:#f5f3ff;color:var(--violet-d)" onclick="openSettings()"></button>
   <div class="row mt"><button class="btn btn-main" onclick="startToday()">🚀 오늘 공부하기</button><button class="btn btn-amber" onclick="openListen()">🎧 그냥 듣기</button></div>
+  <div class="row mt"><button id="gameBtn" class="btn btn-green" onclick="startGame()">🎮 연속 도전</button></div>
   <div class="grid3 mt">
    <div class="stat" style="background:#fff7ed"><div style="font-size:24px">🔥</div><div class="muted">이번 주</div><div id="weekCount" style="font-size:18px">0일</div></div>
    <div class="stat" style="background:#f5f3ff"><div style="font-size:24px">🏅</div><div class="muted">레벨</div><div style="font-size:18px">Lv.<span id="level">1</span></div></div>
@@ -136,6 +137,15 @@ label.muted{display:block;margin-top:12px}
  <div class="row mt" style="justify-content:center"><button id="lsRepeat" class="tg" onclick="lsOpt('listenRepeat')">🔁 반복</button><button id="lsKo" class="tg" onclick="lsOpt('listenKo')">🇰🇷 뜻 먼저 읽기</button></div>
  <p class="muted center">밥 먹을 때 틀어 두세요. 학습 기록과 별에는 영향이 없어요.</p>
  <div id="lsList" class="card mt"></div>
+</section>
+
+<section id="game" class="hide">
+ <div class="row" style="justify-content:space-between;margin-bottom:10px">
+  <button class="btn btn-soft" style="padding:8px 14px" onclick="goHome()">← 나가기</button>
+  <div class="kr" style="font-size:20px">🎮 연속 도전</div><div style="width:70px"></div>
+ </div>
+ <div class="row" style="justify-content:center;gap:8px"><div class="pill" style="background:#fff7ed">🔥 연속 <span id="gStreak">0</span></div><div class="pill" style="background:#fef3c7">🏆 최고 <span id="gBest">0</span></div><div class="pill" style="background:#f5f3ff">남은 문제 <span id="gLeft">0</span></div></div>
+ <div id="gCard" class="card mt"></div>
 </section>
 
 <section id="settings" class="hide">
@@ -195,13 +205,14 @@ function ymd(d=new Date()){return d.getFullYear()+'-'+String(d.getMonth()+1).pad
 function blankProg(){return {worldDays:{},worldDone:{},worldLast:{}}}
 function normalize(s){
  s=s&&typeof s==='object'?s:{};
- const st=Object.assign({name:'지수',nameEn:'Jisu',avatar:'🦄',level:'beginner',stars:0,days:{},stickers:[],missions:{},todayMission:null,rate:.8,prog:{},runs:{date:'',map:{}},listenKo:false,listenRepeat:true,custom:[]},s);
+ const st=Object.assign({name:'지수',nameEn:'Jisu',avatar:'🦄',level:'beginner',stars:0,days:{},stickers:[],missions:{},todayMission:null,rate:.8,prog:{},runs:{date:'',map:{}},listenKo:false,listenRepeat:true,custom:[],game:{best:{},perfect:{}}},s);
  if(s.worldDays&&!s.prog)st.prog={beginner:{worldDays:s.worldDays||{},worldDone:s.worldDone||{},worldLast:s.worldLast||{}}};
  delete st.worldDays;delete st.worldDone;delete st.worldLast;
  if(!LEVELS[st.level])st.level='beginner';
  if(!st.prog||typeof st.prog!=='object')st.prog={};
  for(const k in LEVELS){const p=st.prog[k]=Object.assign(blankProg(),st.prog[k]||{});for(const id in p.worldDays)if(p.worldDays[id]>=DAYS)p.worldDone[id]=true}
  st.custom=(Array.isArray(st.custom)?st.custom:[]).filter(c=>c&&typeof c.en==='string'&&typeof c.ko==='string'&&c.en.trim()&&c.ko.trim()).slice(0,100).map(c=>({en:c.en.slice(0,120),ko:c.ko.slice(0,80),e:String(c.e||'💬').slice(0,8),pr:String(c.pr||'').slice(0,160)}));
+ {const g=st.game&&typeof st.game==='object'?st.game:{};st.game={best:{},perfect:{}};for(const k in LEVELS){st.game.best[k]=Math.max(0,Math.floor(+(g.best||{})[k])||0);st.game.perfect[k]=!!(g.perfect||{})[k]}}
  st.stars=+st.stars||0;
  if(!Array.isArray(st.stickers))st.stickers=[];
  if(!st.days||typeof st.days!=='object')st.days={};
@@ -218,6 +229,7 @@ function loadState(){
  return normalize(s);
 }
 let state=loadState(),cw=0,stage=0,S=null,voices=[],playId=0;
+const G={run:0,pool:[],deck:[],i:0,streak:0,locked:false,picked:[]};
 function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){toast('⚠️ 기록을 저장하지 못했어요.')}}
 
 /* ---------- 도우미 ---------- */
@@ -254,7 +266,7 @@ function T(s){
   .replace(/\{KO이에요\}/g,k+(b?'이에요':'예요')).replace(/\{KO는\}/g,k+(b?'이는':'는')).replace(/\{KO가\}/g,k+(b?'이가':'가')).replace(/\{KO\}/g,k);
 }
 const tx=p=>({en:T(p.en),ko:T(p.ko),e:p.e,pr:p.pr});
-function show(id){['home','session','listen','settings'].forEach(x=>$(x).classList.toggle('hide',x!==id));window.scrollTo({top:0})}
+function show(id){if(id!=='game')G.run++;['home','session','listen','game','settings'].forEach(x=>$(x).classList.toggle('hide',x!==id));window.scrollTo({top:0})}
 
 /* ---------- 음성 ---------- */
 function loadVoices(){voices=speechSynthesis.getVoices()}
@@ -362,6 +374,7 @@ function renderHome(){
  const ad=isAdult(),lv=LV();
  $('hello').textContent=ad?`${state.name}님, 반가워요! 👋`:`안녕 ${state.name}! 👋`;
  $('helloSub').innerHTML=ad?'오늘도 영어 <b style="color:var(--violet)">10분</b>, 시작해 볼까요?':'오늘도 영어 <b style="color:var(--violet)">10분</b>만 해볼까?';
+ $('gameBtn').textContent=`🎮 연속 도전 · 🏆 최고 ${state.game.best[state.level]||0}개`;
  $('levelPill').textContent=`${lv.icon} ${lv.name} 모드 · 바꾸기`;
  $('level').textContent=Math.min(20,1+Math.floor(state.stars/15));
  let c=0;for(let i=0;i<7;i++){const d=new Date();d.setDate(d.getDate()-i);if(state.days[ymd(d)])c++}
@@ -605,6 +618,87 @@ async function lsLoop(id){
   await wait(1300);if(id!==playId)return;
   LS.i++;
  }
+}
+
+/* ---------- 연속 도전 (게임) ---------- */
+// 열려 있는 월드의 문장 전부가 문제예요. 듣고 고르기 / 문장 퍼즐을 섞어 내고, 한 번 틀리면 끝!
+// 모든 문장을 한 번도 안 틀리고 끝내면 만점 (난이도마다 처음 한 번만 별 +1)
+function gamePool(){
+ const seen=new Map(),add=(en,ko,e)=>{en=T(en).trim();ko=T(ko).trim();if(en&&ko&&!seen.has(en))seen.set(en,{en,ko,e:e||'💬'})};
+ W().forEach((w,i)=>{if(!unlocked(i))return;
+  w.phrases.forEach(p=>add(p.en,p.ko,p.e));
+  (w.patterns||[]).forEach(pt=>pt.slots.forEach(x=>add(pt.en.replace('___',x.en),pt.ko.replace('___',x.ko),x.e)));
+  (w.dialogs||[]).forEach(d=>d.forEach(([who,en,ko])=>add(en,ko,'💬')));
+ });
+ return [...seen.values()];
+}
+function gameBest(){return state.game.best[state.level]||0}
+function gameHud(){$('gStreak').textContent=G.streak;$('gBest').textContent=gameBest();$('gLeft').textContent=Math.max(0,G.deck.length-G.i)}
+function startGame(){
+ const pool=gamePool();if(pool.length<4)return toast('문장이 더 필요해요. 월드를 먼저 공부해 봐요!');
+ clearRec();playId++;LS.playing=false;if('speechSynthesis' in window)speechSynthesis.cancel();
+ show('game');G.run++;G.pool=pool;G.deck=shuffle(pool);G.i=0;G.streak=0;G.newBest=false;G.locked=false;requestWake();
+ gameNext();
+}
+function gameNext(){
+ if(G.i>=G.deck.length)return gamePerfect();
+ const t=G.deck[G.i],long=t.en.split(/\s+/).length>=3,run=G.run;G.locked=false;G.picked=[];gameHud();
+ window.scrollTo({top:0});
+ if(long&&Math.random()<.5){
+  G.kind='puzzle';G.tokens=scramble(t.en);
+  $('gCard').innerHTML=`<div class="center kr" style="font-size:20px">🧱 단어를 순서대로 눌러서 문장을 만들어요!</div>
+   <div class="box mt"><div class="emoji">${t.e}</div><div class="ko kr" style="font-size:18px">${esc(t.ko)}</div><button class="btn btn-soft mt" data-say="${esc(t.en)}">🔊 힌트 듣기</button></div>
+   <div id="gAns" class="answer en"></div>
+   <div class="center mt">${G.tokens.map((w,i)=>`<button class="tok en" onclick="gTok(${i},this)">${esc(w)}</button>`).join('')}</div>
+   <div class="center mt"><button class="btn btn-soft" onclick="gReset()">↩️ 다시 놓기</button></div><div id="gMsg" class="center kr mt" style="min-height:28px;font-size:18px"></div>`;
+ }else{
+  G.kind='quiz';
+  G.opts=shuffle([t,...pickN(G.pool.filter(p=>p.ko!==t.ko),2)]);
+  $('gCard').innerHTML=`<div class="center kr" style="font-size:20px">👂 잘 듣고 알맞은 뜻을 골라요!</div>
+   <div class="center mt"><button class="btn btn-main" style="font-size:20px;padding:16px 28px" data-say="${esc(t.en)}">🔊 다시 듣기</button></div>
+   <div class="mt">${G.opts.map((o,i)=>`<button class="opt" onclick="gQuiz(${i},this)"><span style="font-size:32px">${o.e}</span><span class="kr">${esc(o.ko)}</span></button>`).join('')}</div>
+   <div id="gMsg" class="center kr" style="min-height:28px;font-size:18px"></div>`;
+  setTimeout(()=>{if(G.run===run&&!G.locked)speak(t.en)},350);
+ }
+}
+function gQuiz(i,btn){
+ if(G.locked)return;G.locked=true;const t=G.deck[G.i];
+ if(G.opts[i]===t){btn.classList.add('right');gameRight(t)}
+ else{btn.classList.add('wrong');document.querySelectorAll('#gCard .opt')[G.opts.indexOf(t)].classList.add('right');gameOver(t)}
+}
+function gTok(i,btn){
+ if(G.locked||G.picked.includes(i))return;G.picked.push(i);btn.classList.add('used');
+ $('gAns').innerHTML=G.picked.map(k=>`<span>${esc(G.tokens[k])}</span>`).join('');
+ if(G.picked.length===G.tokens.length){
+  G.locked=true;const t=G.deck[G.i];
+  if(G.picked.map(k=>G.tokens[k]).join(' ')===t.en)gameRight(t);else gameOver(t);
+ }
+}
+function gReset(){if(G.locked)return;G.picked=[];$('gAns').innerHTML='';document.querySelectorAll('#gCard .tok').forEach(b=>b.classList.remove('used'))}
+function gameRight(t){
+ G.streak++;G.i++;
+ if(G.streak>gameBest()){state.game.best[state.level]=G.streak;G.newBest=true;save()}
+ gameHud();const m=$('gMsg'),run=G.run;
+ m.innerHTML=`<span class="pop" style="display:inline-block">🎉 정답! 🔥 ${G.streak}연속</span><div class="en" style="font-size:20px;margin-top:4px">${esc(t.en)}</div>`;
+ playId++;speak(t.en);
+ setTimeout(()=>{if(G.run===run)gameNext()},1800);
+}
+function gameOver(t){
+ const run=G.run,best=gameBest(),n=G.streak;
+ gameHud();
+ $('gCard').innerHTML=`<div class="center"><div class="emoji pop">😢</div><div class="kr" style="font-size:26px;margin-top:8px">아쉬워요!</div>
+  <div class="kr mt" style="font-size:20px">🔥 ${n}개 연속 성공</div>${G.newBest?'<div class="kr mt pop" style="font-size:20px;color:#b45309">🏆 새 최고 기록!</div>':`<div class="muted mt">🏆 최고 기록 ${best}개</div>`}
+  <div class="box mt"><div class="muted">정답은</div><div class="en big-en">${esc(t.en)}</div><div class="ko kr">${esc(t.ko)}</div><button class="btn btn-soft mt" data-say="${esc(t.en)}">🔊 듣기</button></div>
+  <div class="row mt" style="justify-content:center"><button class="btn btn-main" onclick="startGame()">🔁 다시 도전</button><button class="btn btn-soft" onclick="goHome()">🗺️ 홈으로</button></div></div>`;
+ playId++;speak(t.en);
+}
+function gamePerfect(){
+ const first=!state.game.perfect[state.level];
+ if(first){state.game.perfect[state.level]=true;state.stars+=1}
+ save();renderHeader();gameHud();
+ $('gCard').innerHTML=`<div class="center"><div class="emoji pop">🏆</div><div class="kr" style="font-size:26px;margin-top:8px">만점! 전부 맞혔어요!</div>
+  <div class="kr mt" style="font-size:20px">🔥 ${G.streak}개 연속 성공</div>${first?'<div class="kr mt pop" style="font-size:20px;color:#b45309">⭐ 첫 만점 보너스! 별 +1</div>':''}
+  <div class="row mt" style="justify-content:center"><button class="btn btn-main" onclick="startGame()">🔁 다시 도전</button><button class="btn btn-soft" onclick="goHome()">🗺️ 홈으로</button></div></div>`;
 }
 
 /* ---------- 설정 ---------- */
