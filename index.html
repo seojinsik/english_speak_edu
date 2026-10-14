@@ -167,14 +167,15 @@ label.muted{display:block;margin-top:12px}
  <div class="card mt"><div class="kr h">📶 난이도</div><p class="muted">진도는 난이도마다 따로 저장돼요. 바꿔도 다른 난이도의 진도는 그대로예요.</p><div id="levelList"></div></div>
  <div class="card mt">
   <div class="kr h">✏️ 우리 아이 말</div>
-  <p class="muted">아이가 실제로 자주 하는 말을 넣어 보세요. 홈 화면 맨 앞 <b>⭐ 우리 아이 말</b> 월드에서 공부해요. 이름 자리는 <b>{EN}</b> 이라고 쓰면 영어 이름으로 바뀌어요.</p>
+  <p class="muted">아이가 자주 하는 말을 넣거나, 기본 문장을 고치고 지울 수 있어요. 홈 화면 맨 앞 <b>⭐ 우리 아이 말</b> 월드에서 공부해요. 이름 자리는 <b>{EN}</b> 이라고 쓰면 영어 이름으로 바뀌어요.</p>
   <div id="customHint" class="muted" style="color:var(--violet-d)"></div>
   <label class="muted" for="cEn">영어 문장</label><input id="cEn" class="inp" maxlength="120" autocomplete="off" autocapitalize="sentences" placeholder="Mom, let's play Roblox!" oninput="previewPron()">
   <div id="cPrev" class="muted"></div>
   <label class="muted" for="cKo">한국어 뜻</label><input id="cKo" class="inp" maxlength="80" autocomplete="off" placeholder="엄마, 로블록스 같이 해요!">
   <div class="row"><div style="flex:1;min-width:110px"><label class="muted" for="cEmoji">이모지 (선택)</label><input id="cEmoji" class="inp" maxlength="4" placeholder="🎮"></div><div style="flex:3;min-width:180px"><label class="muted" for="cPr">한글 발음 (선택 · 비우면 자동)</label><input id="cPr" class="inp" maxlength="160" autocomplete="off" placeholder="맘, 렛츠 플레이 로블록스!"></div></div>
   <label class="muted" for="cParts">덩어리 해석 (선택) · 예: Where is|어디 있어요 / my bag|내 가방</label><input id="cParts" class="inp" maxlength="400" autocomplete="off" placeholder="Mom,|엄마 / let's play|같이 하자 / Roblox|로블록스">
-  <button class="btn btn-main mt" onclick="addCustom()">➕ 추가</button>
+  <div id="cEditBar" class="muted hide mt" style="color:var(--violet-d)"></div>
+  <div class="row mt"><button id="cSaveBtn" class="btn btn-main" onclick="addCustom()">➕ 추가</button><button id="cCancelBtn" class="btn btn-soft hide" onclick="cancelEdit()">취소</button></div>
   <div id="customList" class="mt"></div>
   <details class="mt"><summary class="muted">📋 여러 개 한꺼번에 붙여 넣기</summary>
    <p class="muted">한 줄에 하나씩 <b>영어 | 한국어 | 이모지 | 발음</b> 으로 적어요. (이모지·발음은 생략해도 돼요)</p>
@@ -183,7 +184,7 @@ label.muted{display:block;margin-top:12px}
  </div>
  <div class="card mt">
   <div class="kr h">💾 기록 백업 · 복원</div>
-  <p class="muted">기록은 이 폰의 브라우저에만 저장돼요. 폰을 바꾸거나 브라우저 데이터를 지우기 전에 백업해 두세요.</p>
+  <p class="muted">기록과 "우리 아이 말" 수정 내용은 이 폰의 브라우저에만 저장돼요. 폰을 바꾸거나 브라우저 데이터를 지우기 전에 백업해 두세요.</p>
   <button class="btn btn-soft" onclick="makeBackup()">📤 백업 코드 만들기</button>
   <div id="backupOut" class="hide mt"><textarea id="backupCode" class="inp" rows="4" readonly></textarea><div class="row mt"><button class="btn btn-soft" onclick="copyBackup()">📋 복사</button><button class="btn btn-soft" onclick="downloadBackup()">💾 파일로 저장</button></div><p class="muted">복사한 코드를 카톡 '나와의 채팅'이나 메모에 붙여 넣어 두면 안전해요.</p></div>
   <div class="muted mt"><b>📥 복원</b> · 백업 코드를 붙여 넣거나 백업 파일을 골라요.</div>
@@ -211,7 +212,7 @@ function ymd(d=new Date()){return d.getFullYear()+'-'+String(d.getMonth()+1).pad
 function blankProg(){return {worldDays:{},worldDone:{},worldLast:{}}}
 function normalize(s){
  s=s&&typeof s==='object'?s:{};
- const st=Object.assign({name:'지수',nameEn:'Jisu',avatar:'🦄',level:'beginner',stars:0,days:{},stickers:[],missions:{},todayMission:null,rate:.8,prog:{},runs:{date:'',map:{}},listenKo:false,listenRepeat:true,custom:[],game:{best:{},perfect:{}}},s);
+ const st=Object.assign({name:'지수',nameEn:'Jisu',avatar:'🦄',level:'beginner',stars:0,days:{},stickers:[],missions:{},todayMission:null,rate:.8,prog:{},runs:{date:'',map:{}},listenKo:false,listenRepeat:true,custom:[],kidEdits:{},game:{best:{},perfect:{}}},s);
  if(s.worldDays&&!s.prog)st.prog={beginner:{worldDays:s.worldDays||{},worldDone:s.worldDone||{},worldLast:s.worldLast||{}}};
  delete st.worldDays;delete st.worldDone;delete st.worldLast;
  if(!LEVELS[st.level])st.level='beginner';
@@ -219,6 +220,7 @@ function normalize(s){
  for(const k in LEVELS){const p=st.prog[k]=Object.assign(blankProg(),st.prog[k]||{});for(const id in p.worldDays)if(p.worldDays[id]>=DAYS)p.worldDone[id]=true}
  st.custom=(Array.isArray(st.custom)?st.custom:[]).filter(c=>c&&typeof c.en==='string'&&typeof c.ko==='string'&&c.en.trim()&&c.ko.trim()).slice(0,100).map(c=>({en:c.en.slice(0,120),ko:c.ko.slice(0,80),e:String(c.e||'💬').slice(0,8),pr:String(c.pr||'').slice(0,160),parts:String(c.parts||'').slice(0,400)}));
  {const g=st.game&&typeof st.game==='object'?st.game:{};st.game={best:{},perfect:{}};for(const k in LEVELS){st.game.best[k]=Math.max(0,Math.floor(+(g.best||{})[k])||0);st.game.perfect[k]=!!(g.perfect||{})[k]}}
+ {const ke=st.kidEdits&&typeof st.kidEdits==='object'?st.kidEdits:{};st.kidEdits={};for(const k in LEVELS){const src=ke[k]&&typeof ke[k]==='object'?ke[k]:{},o={};Object.keys(src).slice(0,60).forEach(key=>{const x=src[key];if(!x||typeof x!=='object')return;if(x.del===true){o[key]={del:true};return}if(typeof x.en==='string'&&typeof x.ko==='string'&&x.en.trim()&&x.ko.trim())o[key]={en:x.en.slice(0,120),ko:x.ko.slice(0,80),e:String(x.e||'').slice(0,8),pr:String(x.pr||'').slice(0,160),parts:String(x.parts||'').slice(0,400)}});st.kidEdits[k]=o}}
  st.stars=+st.stars||0;
  if(!Array.isArray(st.stickers))st.stickers=[];
  if(!st.days||typeof st.days!=='object')st.days={};
@@ -244,8 +246,13 @@ const LV=()=>LEVELS[state.level], PR=()=>state.prog[state.level], isAdult=()=>LV
 // 초급·중급은 content.js 의 kid 월드에 합치고, 상급·마스터는 3개 이상 넣으면 간단한 월드가 생겨요.
 function userMissions(){return state.custom.map(x=>`실제 상황에서 "${x.en}" 라고 영어로 말해 보기`)}
 function kidWorlds(){
- const base=LV().worlds,c=state.custom,u=c.map(x=>({en:x.en,ko:x.ko,e:x.e||'💬',pr:x.pr,parts:x.parts}));
- if(base.some(w=>w.kid))return base.map(w=>w.kid?Object.assign({},w,{phrases:[...w.phrases,...u],missions:[...w.missions,...userMissions()]}):w);
+ const base=LV().worlds,c=state.custom,u=c.map(x=>({en:x.en,ko:x.ko,e:x.e||'💬',pr:x.pr,parts:x.parts})),ed=state.kidEdits[state.level]||{};
+ if(base.some(w=>w.kid))return base.map(w=>{
+  if(!w.kid)return w;
+  // 기본 문장은 설정에서 수정·삭제한 내용을 덧씌워요 (원래 문장 영어를 열쇠로 써요)
+  const sp=w.phrases.filter(p=>!(ed[p.en]&&ed[p.en].del)).map(p=>{const x=ed[p.en];return x?{en:x.en,ko:x.ko,e:x.e||p.e,pr:x.pr,parts:x.parts||''}:p});
+  return Object.assign({},w,{phrases:[...sp,...u],missions:[...w.missions,...userMissions()]});
+ });
  if(c.length<3)return base;
  return [{id:'kid',kid:true,simple:true,icon:'⭐',name:'우리 아이 말',desc:'우리가 자주 쓰는 말',bg:'#fef9c3',phrases:u,patterns:[],dialogs:[],missions:userMissions()},...base];
 }
@@ -275,7 +282,7 @@ function T(s){
 const tx=p=>({en:T(p.en),ko:T(p.ko),e:p.e,pr:p.pr,parts:p.parts,raw:p.en});
 // 문장 덩어리 해석: "Where is|어디 있어요 / my bag|내 가방" → 칩으로 나란히 보여줘요 (없으면 안 보여요)
 function partsOf(p){
- const src=p.parts||(typeof PARTS!=='undefined'&&PARTS[p.raw||p.en]);if(!src)return null;
+ const src=p.parts!=null?p.parts:(typeof PARTS!=='undefined'&&PARTS[p.raw||p.en]);if(!src)return null;
  const a=String(src).split(/\s+\/\s+/).map(x=>{const k=x.indexOf('|');return k<0?null:[T(x.slice(0,k).trim()),T(x.slice(k+1).trim())]}).filter(x=>x&&x[0]&&x[1]);
  return a.length>=2?a:null;
 }
@@ -724,11 +731,44 @@ function renderSettings(){
  $('levelList').innerHTML=Object.entries(LEVELS).map(([k,l])=>`<button class="lvl ${k===state.level?'active':''}" onclick="setLevel('${k}')"><div class="kr" style="font-size:19px">${l.icon} ${l.name}${k===state.level?' <span class="muted">· 지금</span>':''}</div><div class="muted" style="font-size:14px;margin-top:2px">${l.who} — ${l.desc}</div></button>`).join('');
 }
 /* 우리 아이 말 */
+let EDIT=null;
+const KE=()=>state.kidEdits[state.level]||(state.kidEdits[state.level]={});
+function kidSeed(){return LV().worlds.find(w=>w.kid)||null}
+function kidCount(){const sd=kidSeed(),ed=KE();return (sd?sd.phrases.filter(p=>!(ed[p.en]&&ed[p.en].del)).length:0)+state.custom.length}
+function rowHtml(e,en,ko,pr,tag,btns){return `<div class="lsItem" style="cursor:default"><span style="font-size:22px">${esc(e||'💬')}</span><span style="flex:1"><span class="en">${esc(en)}</span>${tag?` <span class="phase">${tag}</span>`:''}<br><span class="muted">${esc(ko)}${pr?' · '+esc(pr):''}</span></span>${btns}</div>`}
+const eb=(fn,ic,label)=>`<button class="btn btn-soft sm" onclick="${fn}" aria-label="${label}">${ic}</button>`;
 function renderCustom(){
- const c=state.custom;
- $('customList').innerHTML=c.length?c.map((x,i)=>`<div class="lsItem" style="cursor:default"><span style="font-size:22px">${esc(x.e||'💬')}</span><span style="flex:1"><span class="en">${esc(x.en)}</span><br><span class="muted">${esc(x.ko)}${x.pr?' · '+esc(x.pr):''}</span></span><button class="btn btn-soft sm" onclick="delCustom(${i})" aria-label="삭제">🗑️</button></div>`).join(''):'<div class="muted">아직 없어요. 아이가 자주 하는 말을 넣어 보세요!</div>';
- $('customHint').textContent=`지금 ${c.length}개 · 홈 화면 맨 앞 "⭐ 우리 아이 말" 월드에서 공부해요.`+(LV().worlds.some(w=>w.kid)?'':' (상급·마스터는 3개 이상 넣으면 월드가 생겨요)');
+ const c=state.custom,sd=kidSeed(),ed=KE();let h='';
+ if(sd){
+  const live=[],gone=[];
+  sd.phrases.forEach((p,i)=>{const x=ed[p.en];if(x&&x.del)gone.push([p,i]);else live.push([p,i,x])});
+  h+=`<div class="kr" style="font-size:16px">📚 기본 문장 · ${LV().name} (${live.length}개)</div>`;
+  h+=live.map(([p,i,x])=>{const v=x||p;return rowHtml(v.e||p.e,v.en,v.ko,v.pr,x?'수정됨':'',eb(`startEdit('seed',${i})`,'✏️','수정')+(x?eb(`resetSeed(${i})`,'↩️','원래대로'):'')+eb(`delSeed(${i})`,'🗑️','삭제'))}).join('');
+  if(gone.length)h+=`<div class="muted mt">지운 기본 문장</div>`+gone.map(([p,i])=>rowHtml(p.e,p.en,p.ko,'','',`<button class="btn btn-soft sm" onclick="resetSeed(${i})">↩️ 되살리기</button>`)).join('');
+  if(Object.keys(ed).length)h+=`<div class="mt"><button class="btn btn-soft sm" onclick="resetAllSeeds()">↩️ 기본 문장 전부 원래대로</button></div>`;
+ }
+ h+=`<div class="kr mt" style="font-size:16px">➕ 내가 추가한 문장 (${c.length}개)</div>`;
+ h+=c.length?c.map((x,i)=>rowHtml(x.e,x.en,x.ko,x.pr,'',eb(`startEdit('custom',${i})`,'✏️','수정')+eb(`delCustom(${i})`,'🗑️','삭제'))).join(''):'<div class="muted">아직 없어요. 아이가 자주 하는 말을 넣어 보세요!</div>';
+ $('customList').innerHTML=h;
+ $('customHint').textContent=`지금 ${kidCount()}개 · 홈 화면 맨 앞 "⭐ 우리 아이 말" 월드에서 공부해요.`+(sd?' (월드에는 문장이 최소 4개 남아 있어야 해요)':' (상급·마스터는 3개 이상 넣으면 월드가 생겨요)');
 }
+function setForm(v){$('cEn').value=v.en;$('cKo').value=v.ko;$('cEmoji').value=v.e||'';$('cPr').value=v.pr||'';$('cParts').value=v.parts||'';previewPron()}
+function startEdit(kind,i){
+ let v;
+ if(kind==='seed'){const p=kidSeed().phrases[i],x=KE()[p.en]||{};v={en:x.en??p.en,ko:x.ko??p.ko,e:x.e||p.e,pr:x.pr??(p.pr||''),parts:x.parts??(PARTS[p.en]||'')};EDIT={kind,key:p.en,i}}
+ else{const x=state.custom[i];if(!x)return;v={en:x.en,ko:x.ko,e:x.e,pr:x.pr||'',parts:x.parts||''};EDIT={kind,i}}
+ setForm(v);$('cSaveBtn').textContent='💾 수정 저장';$('cCancelBtn').classList.remove('hide');
+ $('cEditBar').textContent='✏️ 수정 중: '+v.en;$('cEditBar').classList.remove('hide');
+ $('cEn').scrollIntoView({block:'center',behavior:'smooth'});
+}
+function cancelEdit(){EDIT=null;setForm({en:'',ko:'',e:'',pr:'',parts:''});$('cPrev').textContent='';$('cSaveBtn').textContent='➕ 추가';$('cCancelBtn').classList.add('hide');$('cEditBar').classList.add('hide')}
+function delSeed(i){
+ const p=kidSeed().phrases[i];if(kidCount()<=4)return toast('월드에는 문장이 최소 4개 있어야 해요.');
+ if(!confirm(`"${p.en}" 을(를) 지울까요? (나중에 되살릴 수 있어요)`))return;
+ KE()[p.en]={del:true};if(EDIT&&EDIT.key===p.en)cancelEdit();save();renderCustom();
+}
+function resetSeed(i){const p=kidSeed().phrases[i];delete KE()[p.en];save();renderCustom();toast('↩️ 원래대로 되돌렸어요')}
+function resetAllSeeds(){if(!confirm('이 난이도의 기본 문장 수정·삭제를 모두 원래대로 되돌릴까요? (내가 추가한 문장은 그대로예요)'))return;state.kidEdits[state.level]={};cancelEdit();save();renderCustom()}
 function previewPron(){
  const en=$('cEn').value.trim(),el=$('cPrev');
  if(!en){el.textContent='';return}
@@ -743,11 +783,17 @@ function pushCustom(en,ko,e,pr,parts){
  state.custom.push({en:en.slice(0,120),ko:ko.slice(0,80),e:(e||'').trim().slice(0,8)||'💬',pr:(pr||'').trim().slice(0,160),parts:(parts||'').trim().slice(0,400)});return '';
 }
 function addCustom(){
- const r=pushCustom($('cEn').value,$('cKo').value,$('cEmoji').value,$('cPr').value,$('cParts').value);
- if(r==='empty')return toast('영어 문장과 한국어 뜻을 둘 다 적어 주세요.');
- if(r==='noen')return toast('영어 문장은 알파벳으로 적어 주세요.');
- if(r==='full')return toast('최대 100개까지 넣을 수 있어요.');
- save();['cEn','cKo','cEmoji','cPr','cParts'].forEach(id=>$(id).value='');$('cPrev').textContent='';renderCustom();toast('✅ 추가했어요!');
+ const en=$('cEn').value.replace(/\s+/g,' ').trim(),ko=$('cKo').value.trim();
+ if(!en||!ko)return toast('영어 문장과 한국어 뜻을 둘 다 적어 주세요.');
+ if(!/[A-Za-z]/.test(en))return toast('영어 문장은 알파벳으로 적어 주세요.');
+ const rec={en:en.slice(0,120),ko:ko.slice(0,80),e:$('cEmoji').value.trim().slice(0,8),pr:$('cPr').value.trim().slice(0,160),parts:$('cParts').value.trim().slice(0,400)};
+ if(EDIT){
+  if(EDIT.kind==='seed')KE()[EDIT.key]=rec;else if(state.custom[EDIT.i])state.custom[EDIT.i]=Object.assign(rec,{e:rec.e||'💬'});
+  cancelEdit();save();renderCustom();return toast('💾 수정했어요!');
+ }
+ if(state.custom.length>=100)return toast('최대 100개까지 넣을 수 있어요.');
+ state.custom.push(Object.assign(rec,{e:rec.e||'💬'}));
+ save();cancelEdit();renderCustom();toast('✅ 추가했어요!');
 }
 function bulkAdd(){
  let n=0,bad=0;
@@ -755,7 +801,7 @@ function bulkAdd(){
  if(n){save();$('cBulk').value='';renderCustom()}
  toast(n?`✅ ${n}개 추가했어요!${bad?` (${bad}줄은 건너뛰었어요)`:''}`:'추가할 줄이 없어요. 형식: 영어 | 한국어');
 }
-function delCustom(i){const x=state.custom[i];if(!x||!confirm(`"${x.en}" 을(를) 지울까요?`))return;state.custom.splice(i,1);save();renderCustom()}
+function delCustom(i){const x=state.custom[i];if(!x)return;if(kidSeed()&&kidCount()<=4)return toast('월드에는 문장이 최소 4개 있어야 해요.');if(!confirm(`"${x.en}" 을(를) 지울까요?`))return;state.custom.splice(i,1);cancelEdit();save();renderCustom()}
 function saveProfile(){
  const k=$('inName').value.trim(),e=$('inNameEn').value.trim().replace(/\s+/g,' ');
  if(!k)return toast('한글 이름을 적어 주세요.');
