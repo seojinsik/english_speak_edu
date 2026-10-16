@@ -106,7 +106,7 @@ label.muted{display:block;margin-top:12px}
   <div id="hello" class="kr" style="font-size:28px">안녕 지수! 👋</div>
   <p id="helloSub" class="muted" style="font-size:15px"></p>
   <button id="levelPill" class="pill mt" style="background:#f5f3ff;color:var(--violet-d)" onclick="openSettings()"></button>
-  <div class="row mt"><button class="btn btn-main" onclick="startToday()">🚀 오늘 공부하기</button><button class="btn btn-amber" onclick="openListen()">🎧 그냥 듣기</button></div>
+  <div class="row mt"><button class="btn btn-main" onclick="startToday()">🚀 오늘 공부하기</button><button class="btn btn-amber" onclick="openListen()">🎧 그냥 듣기</button><button class="btn btn-soft" onclick="openAiAdd()">➕ 우리 아이 말</button></div>
   <div class="row mt"><button id="gameBtn" class="btn btn-green" onclick="startGame()">🎮 연속 도전</button></div>
   <div class="grid3 mt">
    <div class="stat" style="background:#fff7ed"><div style="font-size:24px">🔥</div><div class="muted">이번 주</div><div id="weekCount" style="font-size:18px">0일</div></div>
@@ -177,10 +177,12 @@ label.muted{display:block;margin-top:12px}
   <div id="cEditBar" class="muted hide mt" style="color:var(--violet-d)"></div>
   <div class="row mt"><button id="cSaveBtn" class="btn btn-main" onclick="addCustom()">➕ 추가</button><button id="cCancelBtn" class="btn btn-soft hide" onclick="cancelEdit()">취소</button></div>
   <div id="customList" class="mt"></div>
-  <details class="mt"><summary class="muted">📋 여러 개 한꺼번에 붙여 넣기</summary>
-   <p class="muted">한 줄에 하나씩 <b>영어 | 한국어 | 이모지 | 발음</b> 으로 적어요. (이모지·발음은 생략해도 돼요)</p>
-   <textarea id="cBulk" class="inp" rows="5" style="font-family:inherit;font-size:14px" placeholder="Can I have more phone time? | 휴대폰 시간 더 주세요. | 📱&#10;Five more minutes! | 5분만 더요!"></textarea>
-   <button class="btn btn-soft mt" onclick="bulkAdd()">📥 한꺼번에 추가</button></details>
+  <details id="aiAdd" class="mt" open><summary class="kr" style="font-size:17px;cursor:pointer">🤖 AI로 한꺼번에 추가</summary>
+   <p class="muted">① <b>📋 AI 가이드 복사</b>를 눌러요.<br>② 쓰는 AI(ChatGPT·Claude·Gemini 등)에 붙여 넣고, 맨 아래 <b>문장:</b> 밑에 한국어를 한 줄에 하나씩 적어 보내요.<br>③ AI 답을 아래 칸에 그대로 붙여 넣고 저장해요.</p>
+   <button class="btn btn-soft" onclick="copyAiGuide()">📋 AI 가이드 복사</button>
+   <textarea id="cBulk" class="inp mt" rows="5" style="font-family:inherit;font-size:14px" oninput="previewBulk()" placeholder="AI 답을 여기에 붙여 넣으세요&#10;예) Let's ride bikes! | 자전거 타자! | 🚲 | 렛츠 라이드 바이크스! | Let's|우리 ~하자 / ride bikes|자전거 타다"></textarea>
+   <div id="cBulkPrev" class="mt"></div>
+   <button id="cBulkBtn" class="btn btn-main mt hide" onclick="bulkAdd()">📥 추가하기</button></details>
  </div>
  <div class="card mt">
   <div class="kr h">💾 기록 백업 · 복원</div>
@@ -795,11 +797,61 @@ function addCustom(){
  state.custom.push(Object.assign(rec,{e:rec.e||'💬'}));
  save();cancelEdit();renderCustom();toast('✅ 추가했어요!');
 }
+/* AI로 한꺼번에 추가: 가이드를 복사해 AI에게 보내고, 답을 붙여 넣어요 */
+function aiGuide(){
+ const en=state.nameEn,call=T('{KO야}'),k=state.name;
+ return `아래 한국어 문장을 아이 영어 학습용으로 바꿔 줘.
+규칙:
+- 한 문장당 한 줄, 다른 설명 없이 아래 형식으로만 답해.
+- 형식: 영어 | 한국어 뜻 | 이모지 1개 | 한글 발음 | 덩어리 해석
+- 영어는 원어민이 실제로 쓰는 짧고 자연스러운 말로. 아이 이름은 영어로 "${en}"라고 써.
+- 한글 발음은 영어를 소리 나는 대로 한글로 적어 (예: 렛츠 고).
+- 덩어리 해석은 "영어 덩어리|뜻"을 " / "로 이어서 적어.
+- 예시:
+${en}, let's go outside and ride bikes! | ${call}, 우리 밖에 자전거 타러 나가자 | 🚲 | ${k}, 렛츠 고 아웃사이드 앤 라이드 바이크스! | ${en}|${call} / let's go outside|밖에 나가자 / and ride bikes|자전거 타자
+
+문장:
+`;
+}
+function copyText(text,msg){
+ const fb=()=>{const t=document.createElement('textarea');t.value=text;document.body.appendChild(t);t.select();try{document.execCommand('copy');toast(msg)}catch(e){toast('복사하지 못했어요.')}t.remove()};
+ if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(text).then(()=>toast(msg),fb);else fb();
+}
+function copyAiGuide(){copyText(aiGuide(),'📋 복사했어요! AI에 붙여 넣고 "문장:" 밑에 한국어를 적어 보내세요.')}
+function openAiAdd(){openSettings();const d=$('aiAdd');d.open=true;setTimeout(()=>d.scrollIntoView({behavior:'smooth',block:'start'}),60)}
+// AI 답에서 형식에 맞는 줄만 골라요 (설명·코드 블록·머리글·표 구분선은 건너뛰어요)
+function parseBulk(text){
+ const ok=[],bad=[],dup=[],seen=new Set(state.custom.map(c=>c.en.toLowerCase()));
+ text.split(/\r?\n/).forEach(raw=>{
+  let l=raw.trim().replace(/^(?:[-*•]|\d+[.)])\s+/,'');
+  if(!l.includes('|'))return;
+  if(/^\|?[\s:|-]+\|?$/.test(l))return;
+  if(l.startsWith('|')&&l.endsWith('|'))l=l.slice(1,-1);
+  const a=l.split('|').map(x=>x.trim().replace(/^[`*"]+|[`*"]+$/g,''));
+  if(/영어/.test(a[0])&&/한국어|뜻/.test(a[1]||''))return;
+  const en=(a[0]||'').replace(/\s+/g,' '),ko=a[1]||'';
+  if(!/[A-Za-z]/.test(en)||!ko||/[가-힣]/.test(en))return bad.push(raw.trim());
+  if(seen.has(en.toLowerCase()))return dup.push(en);
+  seen.add(en.toLowerCase());
+  const parts=a.slice(4).join('|').split(/\s*\/\s*/).map(x=>x.split('|').map(y=>y.trim()).join('|')).filter(x=>x.includes('|')).join(' / ');
+  ok.push({en,ko,e:a[2]||'',pr:a[3]||'',parts});
+ });
+ return {ok,bad,dup};
+}
+function previewBulk(){
+ const {ok,bad,dup}=parseBulk($('cBulk').value),room=Math.max(0,100-state.custom.length);let h='';
+ ok.forEach((x,i)=>{h+=`<div class="box" style="text-align:left;padding:12px;margin-bottom:8px${i>=room?';opacity:.4':''}"><div><span style="font-size:22px">${esc(x.e||'💬')}</span> <b class="en">${esc(x.en)}</b></div><div class="kr">${esc(x.ko)}</div>${x.pr?`<div class="muted">🔤 ${esc(x.pr)}</div>`:''}${x.parts?`<div class="muted">🧩 ${esc(x.parts.replace(/\|/g,' → '))}</div>`:''}</div>`});
+ dup.forEach(en=>{h+=`<div class="muted">↩️ 이미 있어요: ${esc(en)}</div>`});
+ bad.forEach(l=>{h+=`<div class="muted" style="color:#c2410c">⚠️ 형식이 달라요: ${esc(l.slice(0,80))}</div>`});
+ if(ok.length>room)h+=`<div class="muted" style="color:#c2410c">⚠️ 최대 100개까지라 ${ok.length-room}개는 빠져요.</div>`;
+ $('cBulkPrev').innerHTML=h||($('cBulk').value.trim()?'<div class="muted">⚠️ 형식에 맞는 줄이 없어요. 형식: 영어 | 한국어 뜻 | 이모지 | 발음 | 덩어리</div>':'');
+ const n=Math.min(ok.length,room),b=$('cBulkBtn');b.classList.toggle('hide',!n);b.textContent=`📥 ${n}개 추가하기`;
+}
 function bulkAdd(){
- let n=0,bad=0;
- $('cBulk').value.split(/\n/).forEach(l=>{if(!l.trim())return;const [en,ko,e,pr]=l.split('|');const r=pushCustom(en||'',ko||'',e,pr);if(r)bad++;else n++});
- if(n){save();$('cBulk').value='';renderCustom()}
- toast(n?`✅ ${n}개 추가했어요!${bad?` (${bad}줄은 건너뛰었어요)`:''}`:'추가할 줄이 없어요. 형식: 영어 | 한국어');
+ const {ok}=parseBulk($('cBulk').value);let n=0;
+ ok.forEach(x=>{if(!pushCustom(x.en,x.ko,x.e,x.pr,x.parts))n++});
+ if(!n)return toast('추가할 문장이 없어요.');
+ save();$('cBulk').value='';previewBulk();renderCustom();toast(`✅ ${n}개 추가했어요!`);
 }
 function delCustom(i){const x=state.custom[i];if(!x)return;if(kidSeed()&&kidCount()<=4)return toast('월드에는 문장이 최소 4개 있어야 해요.');if(!confirm(`"${x.en}" 을(를) 지울까요?`))return;state.custom.splice(i,1);cancelEdit();save();renderCustom()}
 function saveProfile(){
